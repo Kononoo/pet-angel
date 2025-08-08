@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-
+	"errors"
 	v1 "pet-angel/api/helloworld/v1"
 	"pet-angel/internal/biz"
 )
@@ -25,5 +25,12 @@ func (s *GreeterService) SayHello(ctx context.Context, in *v1.HelloRequest) (*v1
 	if err != nil {
 		return nil, err
 	}
-	return &v1.HelloReply{Message: "Hello " + g.Hello}, nil
+	// 返回业务数据，会被统一响应编码器包装到 HTTP 响应的 data 字段中
+	rsp := &v1.HelloReply{
+		Message: "Hello " + g.Hello,
+		Pet:     "小猫咪～",
+		Hello:   "主人你好呀！",
+	}
+	err = errors.New("user not found")
+	return rsp, err
 }

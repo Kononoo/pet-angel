@@ -71,9 +71,8 @@ func (x *HelloRequest) GetName() string {
 type HelloReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
-	Stat          int32                  `protobuf:"varint,3,opt,name=stat,proto3" json:"stat,omitempty"`
-	Data          string                 `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
+	Pet           string                 `protobuf:"bytes,2,opt,name=pet,proto3" json:"pet,omitempty"`
+	Hello         string                 `protobuf:"bytes,3,opt,name=hello,proto3" json:"hello,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -115,23 +114,16 @@ func (x *HelloReply) GetMessage() string {
 	return ""
 }
 
-func (x *HelloReply) GetCode() int32 {
+func (x *HelloReply) GetPet() string {
 	if x != nil {
-		return x.Code
+		return x.Pet
 	}
-	return 0
+	return ""
 }
 
-func (x *HelloReply) GetStat() int32 {
+func (x *HelloReply) GetHello() string {
 	if x != nil {
-		return x.Stat
-	}
-	return 0
-}
-
-func (x *HelloReply) GetData() string {
-	if x != nil {
-		return x.Data
+		return x.Hello
 	}
 	return ""
 }
@@ -142,13 +134,12 @@ const file_helloworld_v1_greeter_proto_rawDesc = "" +
 	"\n" +
 	"\x1bhelloworld/v1/greeter.proto\x12\rhelloworld.v1\x1a\x1cgoogle/api/annotations.proto\"\"\n" +
 	"\fHelloRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"b\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"N\n" +
 	"\n" +
 	"HelloReply\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\x05R\x04code\x12\x12\n" +
-	"\x04stat\x18\x03 \x01(\x05R\x04stat\x12\x12\n" +
-	"\x04data\x18\x04 \x01(\tR\x04data2i\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\x12\x10\n" +
+	"\x03pet\x18\x02 \x01(\tR\x03pet\x12\x14\n" +
+	"\x05hello\x18\x03 \x01(\tR\x05hello2i\n" +
 	"\aGreeter\x12^\n" +
 	"\bSayHello\x12\x1b.helloworld.v1.HelloRequest\x1a\x19.helloworld.v1.HelloReply\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/helloworld/{name}BS\n" +
 	"\x1cdev.kratos.api.helloworld.v1B\x11HelloworldProtoV1P\x01Z\x1epet-angel/api/helloworld/v1;v1b\x06proto3"

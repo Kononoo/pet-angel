@@ -33,13 +33,9 @@ components:
             properties:
                 message:
                     type: string
-                code:
-                    type: integer
-                    format: int32
-                stat:
-                    type: integer
-                    format: int32
-                data:
+                pet:
+                    type: string
+                hello:
                     type: string
             description: The response message containing the greetings
 tags:
