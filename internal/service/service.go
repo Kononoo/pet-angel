@@ -1,6 +1,3 @@
 package service
 
-import "github.com/google/wire"
-
-// ProviderSet is service providers.
-var ProviderSet = wire.NewSet(NewGreeterService)
+// 删除 ProviderSet，依赖注入统一在 wire.go 中进行
