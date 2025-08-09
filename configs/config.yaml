@@ -16,4 +16,14 @@ data:
     write_timeout: 0.2s
 auth:
   jwt_secret: "abc123ABC?"
-  jwt_ttl: 2592000s
+  jwt_ttl: 259200s
+# minio 可暂不使用
+minio:
+  endpoint: "47.121.139.174:9000"
+  access_key: "root"
+  secret_key: "root1234"
+  use_ssl: false
+  bucket: "pet-angel"
+storage:
+  local_root: "./data/assets"
+  public_prefix: "/static/"

@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"sync"
 
@@ -8,6 +9,8 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -15,11 +18,15 @@ import (
 // Data 统一数据入口（支持 database/sql 与 GORM，仓储优先使用 GORM）
 // DB: 标准库 *sql.DB（部分场景可用）
 // Gorm: *gorm.DB 主连接
+// Minio: MinIO 对象存储客户端
 
 type Data struct {
 	logger *log.Helper
 	DB     *sql.DB
 	Gorm   *gorm.DB
+
+	Minio       *minio.Client
+	MinioBucket string
 
 	// in-memory stores（作为兜底/样例）
 	userByID       map[int64]*UserDTO
@@ -28,7 +35,7 @@ type Data struct {
 	mu             sync.RWMutex
 }
 
-// NewData 初始化数据库连接（GORM）
+// NewData 初始化数据库与 MinIO 连接
 func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	l := log.NewHelper(logger)
 	var db *sql.DB
@@ -48,6 +55,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 			return nil, nil, err
 		}
 	}
+
 	d := &Data{
 		logger:         l,
 		DB:             db,
@@ -56,6 +64,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		userByUsername: make(map[string]*UserDTO),
 		nextUserID:     1,
 	}
+
 	cleanup := func() {
 		l.Info("closing the data resources")
 		if d.DB != nil {
@@ -63,6 +72,33 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		}
 	}
 	return d, cleanup, nil
+}
+
+// InitMinio 创建 MinIO 客户端并确保桶存在
+func (d *Data) InitMinio(ctx context.Context, mc *conf.Minio) error {
+	if mc == nil || mc.Endpoint == "" {
+		return nil
+	}
+	cli, err := minio.New(mc.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(mc.AccessKey, mc.SecretKey, ""),
+		Secure: mc.UseSsl,
+	})
+	if err != nil {
+		return err
+	}
+	d.Minio = cli
+	d.MinioBucket = mc.Bucket
+	// 确保 bucket 存在
+	exists, err := cli.BucketExists(ctx, mc.Bucket)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if err := cli.MakeBucket(ctx, mc.Bucket, minio.MakeBucketOptions{}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // UserDTO internal data model for in-memory store

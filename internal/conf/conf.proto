@@ -9,6 +9,8 @@ message Bootstrap {
   Server server = 1;
   Data data = 2;
   Auth auth = 3; // JWT 配置
+  Minio minio = 4; // MinIO 对象存储（可选）
+  Storage storage = 5; // 本地存储（开发阶段使用）
 }
 
 message Server {
@@ -45,4 +47,19 @@ message Data {
 message Auth {
   string jwt_secret = 1;                  // HMAC 密钥
   google.protobuf.Duration jwt_ttl = 2;   // token 有效期
+}
+
+// MinIO 配置
+message Minio {
+  string endpoint = 1;   // 例如 47.121.139.174:9000
+  string access_key = 2; // 访问密钥
+  string secret_key = 3; // 密钥
+  bool use_ssl = 4;      // 是否使用https
+  string bucket = 5;     // 存储桶
+}
+
+// 本地存储配置
+message Storage {
+  string local_root = 1;   // 本地根目录（相对/绝对均可）
+  string public_prefix = 2; // 对外访问前缀，例如 /static/
 }

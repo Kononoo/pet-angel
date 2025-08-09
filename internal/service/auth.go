@@ -29,6 +29,7 @@ func NewAuthService(uc *biz.AuthUsecase, authCfg *conf.Auth, l log.Logger) *Auth
 	if authCfg != nil {
 		secret = authCfg.JwtSecret
 	}
+	jwtutil.SetGlobalSecret(secret)
 	return &AuthService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 

@@ -8,11 +8,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Claims 定义业务自定义的 JWT Claims
-// - UserID: 用户ID
-// - RegisteredClaims: 标准字段（过期等）
+var globalSecret string
+
+// SetGlobalSecret 设置全局JWT密钥（由服务初始化时设置）
+func SetGlobalSecret(secret string) { globalSecret = secret }
+
+// Claims 自定义Claims
 type Claims struct {
-	UserID int64 `json:"user_id"`
+	UserID int64 `json:"uid"`
 	jwt.RegisteredClaims
 }
 
@@ -32,29 +35,34 @@ func Sign(secret string, userID int64, ttl time.Duration) (string, time.Time, er
 	return s, exp, err
 }
 
-// Parse 校验并解析 JWT
+// Parse 使用指定secret解析
 func Parse(secret, tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
+	tk, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := tk.Claims.(*Claims); ok && tk.Valid {
 		return claims, nil
 	}
 	return nil, errors.New("invalid token")
 }
 
-// FromAuthHeader 提取 Authorization: Bearer <token>
-func FromAuthHeader(authHeader string) (string, error) {
-	if authHeader == "" {
+// ParseSecretFromCtx 使用全局密钥解析
+func ParseSecretFromCtx(_ interface{}, tokenString string) (*Claims, error) {
+	if globalSecret == "" {
+		return nil, errors.New("jwt secret not initialized")
+	}
+	return Parse(globalSecret, tokenString)
+}
+
+// FromAuthHeader 提取 Bearer Token
+func FromAuthHeader(header string) (string, error) {
+	if header == "" {
 		return "", errors.New("empty authorization header")
 	}
-	parts := strings.SplitN(authHeader, " ", 2)
+	parts := strings.SplitN(header, " ", 2)
 	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 		return "", errors.New("invalid authorization header")
 	}

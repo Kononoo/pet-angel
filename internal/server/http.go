@@ -1,14 +1,22 @@
 package server
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	authv1 "pet-angel/api/auth/v1"
 	avatv1 "pet-angel/api/avatar/v1"
 	communityv1 "pet-angel/api/community/v1"
 	greeterv1 "pet-angel/api/helloworld/v1"
+	msgv1 "pet-angel/api/message/v1"
 	userv1 "pet-angel/api/user/v1"
 	"pet-angel/internal/conf"
 	"pet-angel/internal/service"
@@ -17,6 +25,8 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	recovery "github.com/go-kratos/kratos/v2/middleware/recovery"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 // 统一响应结构
@@ -52,12 +62,27 @@ func ResponseEncoder(w http.ResponseWriter, r *http.Request, d interface{}) (err
 		}
 	default:
 		// 普通接口包装成统一响应格式
-		reply := &Response{
-			Stat: 1,
-			Code: 0,
-			Msg:  "ok",
-			Data: d,
+		// 对于 proto.Message，使用 protojson.EmitUnpopulated 确保 false/0 这类零值也能输出
+		if codec.Name() == "json" {
+			if pm, ok := d.(proto.Message); ok {
+				body, mErr := protojson.MarshalOptions{EmitUnpopulated: true}.Marshal(pm)
+				if mErr != nil {
+					return mErr
+				}
+				wrapper := struct {
+					Stat   int             `json:"stat"`
+					Code   int             `json:"code"`
+					Msg    string          `json:"msg"`
+					Reason string          `json:"reason,omitempty"`
+					Data   json.RawMessage `json:"data"`
+				}{Stat: 1, Code: 0, Msg: "ok", Data: body}
+				if data, err = json.Marshal(&wrapper); err != nil {
+					return
+				}
+				break
+			}
 		}
+		reply := &Response{Stat: 1, Code: 0, Msg: "ok", Data: d}
 		if data, err = codec.Marshal(reply); err != nil {
 			return
 		}
@@ -102,8 +127,29 @@ func ErrorEncoder(w http.ResponseWriter, r *http.Request, err error) {
 	_, _ = w.Write(body)
 }
 
+// ensureDir 确保目录存在
+func ensureDir(path string) error {
+	if path == "" {
+		return fmt.Errorf("empty path")
+	}
+	return os.MkdirAll(path, 0o755)
+}
+
+// saveMultipartFile 保存上传的文件
+func saveMultipartFile(file multipart.File, dst string) error {
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	if _, err := io.Copy(out, file); err != nil {
+		return err
+	}
+	return nil
+}
+
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, avatar *service.AvatarService, logger log.Logger) *khttp.Server {
+func NewHTTPServer(c *conf.Server, storage *conf.Storage, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, avatar *service.AvatarService, message *service.MessageService, logger log.Logger) *khttp.Server {
 	var opts = []khttp.ServerOption{
 		khttp.Middleware(
 			recovery.Recovery(),
@@ -136,10 +182,68 @@ func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, auth *servic
 	}
 
 	srv := khttp.NewServer(opts...)
+	// 静态资源服务（/static/ 前缀）
+	root := "./data/assets"
+	prefix := "/static/"
+	if storage != nil {
+		if storage.LocalRoot != "" {
+			root = storage.LocalRoot
+		}
+		if storage.PublicPrefix != "" {
+			prefix = storage.PublicPrefix
+		}
+	}
+	_ = ensureDir(root)
+	srv.Handle(prefix, http.StripPrefix(prefix, http.FileServer(http.Dir(root))))
+
+	// 简单上传接口：POST /v1/upload/file
+	srv.Handle("/v1/upload/file", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			_, _ = w.Write([]byte("method not allowed"))
+			return
+		}
+		if err := r.ParseMultipartForm(32 << 20); err != nil { // 32MB
+			ErrorEncoder(w, r, errors.BadRequest("UPLOAD_PARSE_ERROR", fmt.Sprintf("parse form: %v", err)))
+			return
+		}
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			ErrorEncoder(w, r, errors.BadRequest("UPLOAD_FILE_REQUIRED", "file is required"))
+			return
+		}
+		defer file.Close()
+		// 类别：avatar/image/video
+		category := r.FormValue("type")
+		if category == "" {
+			category = "other"
+		}
+		// 子目录：按日期分片
+		subdir := filepath.Join(category, time.Now().Format("2006/01/02"))
+		baseDir := filepath.Join(root, subdir)
+		if err := ensureDir(baseDir); err != nil {
+			ErrorEncoder(w, r, errors.InternalServer("MKDIR_FAILED", err.Error()))
+			return
+		}
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			ext = ".bin"
+		}
+		filename := fmt.Sprintf("%d_%d%s", time.Now().UnixNano(), os.Getpid(), ext)
+		dstPath := filepath.Join(baseDir, filename)
+		if err := saveMultipartFile(file, dstPath); err != nil {
+			ErrorEncoder(w, r, errors.InternalServer("SAVE_FAILED", err.Error()))
+			return
+		}
+		url := strings.TrimRight(prefix, "/") + "/" + filepath.ToSlash(filepath.Join(subdir, filename))
+		ResponseEncoder(w, r, map[string]string{"url": url})
+	}))
+
 	greeterv1.RegisterGreeterHTTPServer(srv, greeter)
 	authv1.RegisterAuthServiceHTTPServer(srv, auth)
 	userv1.RegisterUserServiceHTTPServer(srv, user)
 	communityv1.RegisterCommunityServiceHTTPServer(srv, community)
 	avatv1.RegisterAvatarServiceHTTPServer(srv, avatar)
+	msgv1.RegisterMessageServiceHTTPServer(srv, message)
 	return srv
 }

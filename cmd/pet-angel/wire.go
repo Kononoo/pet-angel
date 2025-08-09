@@ -18,7 +18,7 @@ import (
 )
 
 // wireApp init kratos application.
-func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, minioConf *conf.Minio, storageConf *conf.Storage, logger log.Logger) (*kratos.App, func(), error) {
 	panic(wire.Build(
 		// data/infrastructure
 		data.NewData,
@@ -29,6 +29,7 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger 
 		data.NewUserRepo,
 		data.NewCommunityRepo,
 		data.NewAvatarRepo,
+		data.NewMessageRepo,
 
 		// interface bindings
 		wire.Bind(new(biz.GreeterRepo), new(*data.GreeterRepo)),
@@ -36,6 +37,7 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger 
 		wire.Bind(new(biz.UserRepo), new(*data.UserRepoImpl)),
 		wire.Bind(new(biz.CommunityRepo), new(*data.CommunityRepoImpl)),
 		wire.Bind(new(biz.AvatarRepo), new(*data.AvatarRepo)),
+		wire.Bind(new(biz.MessageRepo), new(*data.MessageRepoImpl)),
 
 		// biz
 		biz.NewGreeterUsecase,
@@ -43,6 +45,7 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger 
 		biz.NewUserUsecase,
 		biz.NewCommunityUsecase,
 		biz.NewAvatarUsecase,
+		biz.NewMessageUsecase,
 
 		// service
 		service.NewGreeterService,
@@ -50,6 +53,7 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger 
 		service.NewUserService,
 		service.NewCommunityService,
 		service.NewAvatarService,
+		service.NewMessageService,
 
 		// server
 		server.NewHTTPServer,
