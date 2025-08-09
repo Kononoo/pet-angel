@@ -1238,6 +1238,7 @@ components:
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
         api.user.v1.FollowUserRequest:
             type: object
             properties:
@@ -1249,72 +1250,93 @@ components:
             properties:
                 total:
                     type: integer
+                    description: 总条数
                     format: int32
                 list:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.user.v1.UserBrief'
+                    description: 关注列表
         api.user.v1.GetLikeListReply:
             type: object
             properties:
                 total:
                     type: integer
+                    description: 总条数
                     format: int32
                 list:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.user.v1.PostBrief'
+                    description: 点赞过的帖子列表
         api.user.v1.GetUserProfileReply:
             type: object
             properties:
                 avatar:
                     type: string
+                    description: 头像URL
                 nickname:
                     type: string
+                    description: 昵称
                 petName:
                     type: string
+                    description: 宠物名称
                 petSex:
                     type: integer
+                    description: 宠物性别 0未知/1男/2女
                     format: int32
                 kind:
                     type: string
+                    description: 宠物品类
                 weight:
                     type: integer
+                    description: 体重(kg)
                     format: int32
                 hobby:
                     type: string
+                    description: 爱好
                 description:
                     type: string
+                    description: 简介
                 posts:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.user.v1.PostBrief'
+                    description: 最近的帖子（按时间倒序，条数由服务端控制）
                 isFollowed:
                     type: boolean
+                    description: 当前登录用户是否已关注该用户
             description: 用户主页响应
         api.user.v1.PostBrief:
             type: object
             properties:
                 id:
                     type: string
+                    description: 帖子ID
                 title:
                     type: string
+                    description: 标题（可为空）
                 postType:
                     type: integer
+                    description: 帖子类型：0=图文 1=视频
                     format: int32
                 coverUrl:
                     type: string
+                    description: 封面URL（可为空）
                 likedCount:
                     type: integer
+                    description: 点赞数
                     format: int32
                 createdAt:
                     type: string
+                    description: 创建时间 YYYY-MM-DD HH:MM:SS
             description: 帖子简要信息（用于主页/点赞列表）
         api.user.v1.UnfollowUserReply:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
         api.user.v1.UnfollowUserRequest:
             type: object
             properties:
@@ -1326,10 +1348,13 @@ components:
             properties:
                 id:
                     type: string
+                    description: 用户ID
                 nickname:
                     type: string
+                    description: 昵称
                 avatar:
                     type: string
+                    description: 头像URL
             description: 用户简要
 tags:
     - name: AuthService

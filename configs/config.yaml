@@ -25,6 +25,7 @@ minio:
   use_ssl: false
   bucket: "pet-angel"
 storage:
+  # 服务器部署时的绝对路径
   local_root: "/usr/local/app/pet-angel/data/assets"
   public_prefix: "/static/"
 ai:

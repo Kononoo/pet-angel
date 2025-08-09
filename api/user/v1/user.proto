@@ -37,22 +37,34 @@ service UserService {
 message FollowUserRequest {
   int64 target_user_id = 1; // 目标用户ID（必填，>0）
 }
-message FollowUserReply { bool success = 1; }           // 是否成功
+message FollowUserReply {
+  // 是否成功
+  bool success = 1;
+}
 
 // 取消关注请求
 message UnfollowUserRequest {
   int64 target_user_id = 1; // 目标用户ID（必填，>0）
 }
-message UnfollowUserReply { bool success = 1; }           // 是否成功
+message UnfollowUserReply {
+  // 是否成功
+  bool success = 1;
+}
 
 // 帖子简要信息（用于主页/点赞列表）
 message PostBrief {
-  int64 id = 1;            // 帖子ID
-  string title = 2;        // 标题（可为空）
-  int32 post_type = 3;     // 帖子类型：0=图文 1=视频
-  string cover_url = 4;    // 封面URL（可为空）
-  int32 liked_count = 5;   // 点赞数
-  string created_at = 6;   // 创建时间 YYYY-MM-DD HH:MM:SS
+  // 帖子ID
+  int64 id = 1;
+  // 标题（可为空）
+  string title = 2;
+  // 帖子类型：0=图文 1=视频
+  int32 post_type = 3;
+  // 封面URL（可为空）
+  string cover_url = 4;
+  // 点赞数
+  int32 liked_count = 5;
+  // 创建时间 YYYY-MM-DD HH:MM:SS
+  string created_at = 6;
 }
 
 // 用户主页请求
@@ -62,20 +74,37 @@ message GetUserProfileRequest {
 
 // 用户主页响应
 message GetUserProfileReply {
-  string avatar = 1;        // 头像URL
-  string nickname = 2;      // 昵称
-  string pet_name = 3;      // 宠物名称
-  int32 pet_sex = 4;        // 宠物性别 0未知/1男/2女
-  string kind = 5;          // 宠物品类
-  int32 weight = 6;         // 体重(kg)
-  string hobby = 7;         // 爱好
-  string description = 8;   // 简介
-  repeated PostBrief posts = 9; // 最近的帖子（按时间倒序，条数由服务端控制）
-  bool is_followed = 10;    // 当前登录用户是否已关注该用户
+  // 头像URL
+  string avatar = 1;
+  // 昵称
+  string nickname = 2;
+  // 宠物名称
+  string pet_name = 3;
+  // 宠物性别 0未知/1男/2女
+  int32 pet_sex = 4;
+  // 宠物品类
+  string kind = 5;
+  // 体重(kg)
+  int32 weight = 6;
+  // 爱好
+  string hobby = 7;
+  // 简介
+  string description = 8;
+  // 最近的帖子（按时间倒序，条数由服务端控制）
+  repeated PostBrief posts = 9;
+  // 当前登录用户是否已关注该用户
+  bool is_followed = 10;
 }
 
 // 用户简要
-message UserBrief { int64 id = 1; string nickname = 2; string avatar = 3; }
+message UserBrief {
+  // 用户ID
+  int64 id = 1;
+  // 昵称
+  string nickname = 2;
+  // 头像URL
+  string avatar = 3;
+}
 
 // 关注列表请求/响应
 message GetFollowListRequest {
@@ -83,7 +112,12 @@ message GetFollowListRequest {
   int32 page = 2;     // 页码，从1开始（默认1）
   int32 page_size = 3;// 每页条数（默认20，最大100）
 }
-message GetFollowListReply { int32 total = 1; repeated UserBrief list = 2; }
+message GetFollowListReply {
+  // 总条数
+  int32 total = 1;
+  // 关注列表
+  repeated UserBrief list = 2;
+}
 
 // 点赞列表请求/响应
 message GetLikeListRequest {
@@ -91,4 +125,9 @@ message GetLikeListRequest {
   int32 page = 2;     // 页码，从1开始（默认1）
   int32 page_size = 3;// 每页条数（默认20，最大100）
 }
-message GetLikeListReply { int32 total = 1; repeated PostBrief list = 2; } 
+message GetLikeListReply {
+  // 总条数
+  int32 total = 1;
+  // 点赞过的帖子列表
+  repeated PostBrief list = 2;
+}
