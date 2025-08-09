@@ -23,16 +23,25 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
-	dataData, cleanup, err := data.NewData(confData, logger)
+func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger log.Logger) (*kratos.App, func(), error) {
+	dataData, cleanup, err := data.NewData(dataConf, logger)
 	if err != nil {
 		return nil, nil, err
 	}
 	greeterRepo := data.NewGreeterRepo(dataData, logger)
 	greeterUsecase := biz.NewGreeterUsecase(greeterRepo, logger)
 	greeterService := service.NewGreeterService(greeterUsecase)
-	grpcServer := server.NewGRPCServer(confServer, greeterService, logger)
-	httpServer := server.NewHTTPServer(confServer, greeterService, logger)
+	authRepo := data.NewAuthRepo(dataData)
+	authUsecase := biz.NewAuthUsecase(authRepo, authConf)
+	authService := service.NewAuthService(authUsecase, authConf)
+	userRepo := data.NewUserRepo(dataData)
+	userUsecase := biz.NewUserUsecase(userRepo)
+	userService := service.NewUserService(userUsecase, authConf)
+	communityRepoImpl := data.NewCommunityRepo(dataData)
+	communityUsecase := biz.NewCommunityUsecase(communityRepoImpl)
+	communityService := service.NewCommunityService(communityUsecase, authConf)
+	grpcServer := server.NewGRPCServer(srv, greeterService, authService, userService, communityService, logger)
+	httpServer := server.NewHTTPServer(srv, greeterService, authService, userService, communityService, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()

@@ -18,46 +18,39 @@ import (
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Bootstrap, log.Logger) (*kratos.App, func(), error) {
+func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger log.Logger) (*kratos.App, func(), error) {
 	panic(wire.Build(
-		// infrastructure layer
+		// data/infrastructure
 		data.NewData,
-		data.NewMysql,
-		data.NewRedis,
 
-		// data layer
+		// repo providers
+		data.NewGreeterRepo,
+		data.NewAuthRepo,
 		data.NewUserRepo,
-		data.NewPetModelRepo,
-		data.NewItemRepo,
-		data.NewChatMessageRepo,
-		data.NewCategoryRepo,
-		data.NewPostRepo,
-		data.NewCommentRepo,
-		data.NewUserRelationRepo,
-		data.NewUserInteractionRepo,
-		data.NewNoteRepo,
-		data.NewUserUnlockRecordRepo,
+		data.NewCommunityRepo,
 
-		// biz layer
+		// interface bindings
+		wire.Bind(new(biz.GreeterRepo), new(*data.GreeterRepo)),
+		wire.Bind(new(biz.AuthRepo), new(*data.AuthRepo)),
+		wire.Bind(new(biz.CommunityRepo), new(*data.CommunityRepoImpl)),
+
+		// biz
+		biz.NewGreeterUsecase,
 		biz.NewAuthUsecase,
-		biz.NewAvatarUsecase,
-		biz.NewCommunityUsecase,
 		biz.NewUserUsecase,
-		biz.NewMessageUsecase,
+		biz.NewCommunityUsecase,
 
-		// service layer
+		// service
+		service.NewGreeterService,
 		service.NewAuthService,
-		service.NewAvatarService,
-		service.NewCommunityService,
 		service.NewUserService,
-		service.NewMessageService,
-		service.NewUploadService,
+		service.NewCommunityService,
 
-		// server layer
+		// server
 		server.NewHTTPServer,
 		server.NewGRPCServer,
 
-		// app layer
+		// app
 		newApp,
 	))
 }

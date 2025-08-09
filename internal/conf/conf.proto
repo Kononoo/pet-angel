@@ -8,6 +8,7 @@ import "google/protobuf/duration.proto";
 message Bootstrap {
   Server server = 1;
   Data data = 2;
+  Auth auth = 3; // JWT 配置
 }
 
 message Server {
@@ -38,4 +39,10 @@ message Data {
   }
   Database database = 1;
   Redis redis = 2;
+}
+
+// 认证配置
+message Auth {
+  string jwt_secret = 1;         // HMAC 密钥
+  google.protobuf.Duration jwt_ttl = 2; // token 有效期
 }

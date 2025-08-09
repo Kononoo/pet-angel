@@ -8,8 +8,12 @@ server:
 data:
   database:
     driver: mysql
-    source: root:root@tcp(127.0.0.1:3306)/test?parseTime=True&loc=Local
+    # root:140001@tcp(47.121.139.174:3306)/pet_angel?parseTime=True&loc=Local
+    source: root:140001@tcp(47.121.139.174:3306)/pet_angel?parseTime=True&loc=Local
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
     write_timeout: 0.2s
+auth:
+  jwt_secret: "abc123ABC?"
+  jwt_ttl: 72h

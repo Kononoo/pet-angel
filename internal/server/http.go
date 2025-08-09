@@ -1,18 +1,21 @@
 package server
 
 import (
-	stdhttp "net/http"
+	"net/http"
 	"strconv"
 	"strings"
 
+	authv1 "pet-angel/api/auth/v1"
+	communityv1 "pet-angel/api/community/v1"
 	v1 "pet-angel/api/helloworld/v1"
+	userv1 "pet-angel/api/user/v1"
 	"pet-angel/internal/conf"
 	"pet-angel/internal/service"
 
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/transport/http"
+	recovery "github.com/go-kratos/kratos/v2/middleware/recovery"
+	khttp "github.com/go-kratos/kratos/v2/transport/http"
 )
 
 // 统一响应结构
@@ -35,8 +38,8 @@ func IsCallback(url string) bool {
 }
 
 // ResponseEncoder 统一响应编码器
-func ResponseEncoder(w stdhttp.ResponseWriter, r *stdhttp.Request, d interface{}) (err error) {
-	codec, _ := http.CodecForRequest(r, "Accept")
+func ResponseEncoder(w http.ResponseWriter, r *http.Request, d interface{}) (err error) {
+	codec, _ := khttp.CodecForRequest(r, "Accept")
 	w.Header().Set("Content-Type", ContentType(codec.Name()))
 	var data []byte
 
@@ -64,8 +67,8 @@ func ResponseEncoder(w stdhttp.ResponseWriter, r *stdhttp.Request, d interface{}
 }
 
 // ErrorEncoder 错误响应编码器
-func ErrorEncoder(w stdhttp.ResponseWriter, r *stdhttp.Request, err error) {
-	codec, _ := http.CodecForRequest(r, "Accept")
+func ErrorEncoder(w http.ResponseWriter, r *http.Request, err error) {
+	codec, _ := khttp.CodecForRequest(r, "Accept")
 	w.Header().Set("Content-Type", ContentType(codec.Name()))
 
 	se := errors.FromError(err)
@@ -94,29 +97,33 @@ func ErrorEncoder(w stdhttp.ResponseWriter, r *stdhttp.Request, err error) {
 		}
 	}
 
-	w.WriteHeader(stdhttp.StatusOK)
+	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, logger log.Logger) *http.Server {
-	var opts = []http.ServerOption{
-		http.Middleware(
+func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, logger log.Logger) *khttp.Server {
+	var opts = []khttp.ServerOption{
+		khttp.Middleware(
 			recovery.Recovery(),
 		),
-		http.ResponseEncoder(ResponseEncoder),
-		http.ErrorEncoder(ErrorEncoder),
+		khttp.ResponseEncoder(ResponseEncoder),
+		khttp.ErrorEncoder(ErrorEncoder),
 	}
 	if c.Http.Network != "" {
-		opts = append(opts, http.Network(c.Http.Network))
+		opts = append(opts, khttp.Network(c.Http.Network))
 	}
 	if c.Http.Addr != "" {
-		opts = append(opts, http.Address(c.Http.Addr))
+		opts = append(opts, khttp.Address(c.Http.Addr))
 	}
 	if c.Http.Timeout != nil {
-		opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
+		opts = append(opts, khttp.Timeout(c.Http.Timeout.AsDuration()))
 	}
-	srv := http.NewServer(opts...)
+
+	srv := khttp.NewServer(opts...)
 	v1.RegisterGreeterHTTPServer(srv, greeter)
+	authv1.RegisterAuthServiceHTTPServer(srv, auth)
+	userv1.RegisterUserServiceHTTPServer(srv, user)
+	communityv1.RegisterCommunityServiceHTTPServer(srv, community)
 	return srv
 }

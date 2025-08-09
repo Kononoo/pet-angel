@@ -31,6 +31,12 @@ CREATE TABLE `users` (
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
+-- Migration: add username/password to users table if not exists
+ALTER TABLE `users`
+  ADD COLUMN IF NOT EXISTS `username` varchar(64) NOT NULL DEFAULT '' COMMENT '登录用户名（唯一）' AFTER `id`,
+  ADD COLUMN IF NOT EXISTS `password` varchar(255) NOT NULL DEFAULT '' COMMENT '密码哈希（bcrypt）' AFTER `username`;
+ALTER TABLE `users` ADD UNIQUE KEY IF NOT EXISTS `uk_username` (`username`);
+
 -- =========================
 -- 宠物模型表
 -- =========================

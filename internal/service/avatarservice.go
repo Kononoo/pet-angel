@@ -2,30 +2,116 @@ package service
 
 import (
 	"context"
+	"time"
 
-	pb "pet-angel/api/avatar/v1"
+	avatv1 "pet-angel/api/avatar/v1"
+	"pet-angel/internal/biz"
+	"pet-angel/internal/conf"
+	jwtutil "pet-angel/internal/util/jwt"
+
+	"github.com/go-kratos/kratos/v2/transport"
 )
 
-type AvatarServiceService struct {
-	pb.UnimplementedAvatarServiceServer
+// AvatarService 虚拟形象/道具/聊天 服务
+type AvatarService struct {
+	avatv1.UnimplementedAvatarServiceServer
+	uc        *biz.AvatarUsecase
+	jwtSecret string
 }
 
-func NewAvatarServiceService() *AvatarServiceService {
-	return &AvatarServiceService{}
+// NewAvatarService 依赖注入构造器
+func NewAvatarService(uc *biz.AvatarUsecase, authCfg *conf.Auth) *AvatarService {
+	secret := ""
+	if authCfg != nil {
+		secret = authCfg.JwtSecret
+	}
+	return &AvatarService{uc: uc, jwtSecret: secret}
 }
 
-func (s *AvatarServiceService) GetModels(ctx context.Context, req *pb.GetModelsRequest) (*pb.GetModelsReply, error) {
-	return &pb.GetModelsReply{}, nil
+// GetModels 获取可用模型
+func (s *AvatarService) GetModels(ctx context.Context, in *avatv1.GetModelsRequest) (*avatv1.GetModelsReply, error) {
+	list, err := s.uc.GetModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*avatv1.PetModel, 0, len(list))
+	for _, m := range list {
+		out = append(out, &avatv1.PetModel{Id: m.ID, Name: m.Name, Path: m.Path, ModelType: m.ModelType, IsDefault: m.IsDefault, SortOrder: m.SortOrder})
+	}
+	return &avatv1.GetModelsReply{Models: out}, nil
 }
-func (s *AvatarServiceService) SetPetModel(ctx context.Context, req *pb.SetPetModelRequest) (*pb.SetPetModelReply, error) {
-	return &pb.SetPetModelReply{}, nil
+
+// SetPetModel 设置当前模型
+func (s *AvatarService) SetPetModel(ctx context.Context, in *avatv1.SetPetModelRequest) (*avatv1.SetPetModelReply, error) {
+	userID, err := s.userIDFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.uc.SetPetModel(ctx, userID, in.GetModelId()); err != nil {
+		return nil, err
+	}
+	return &avatv1.SetPetModelReply{Success: true}, nil
 }
-func (s *AvatarServiceService) GetItems(ctx context.Context, req *pb.GetItemsRequest) (*pb.GetItemsReply, error) {
-	return &pb.GetItemsReply{}, nil
+
+// GetItems 获取道具列表
+func (s *AvatarService) GetItems(ctx context.Context, in *avatv1.GetItemsRequest) (*avatv1.GetItemsReply, error) {
+	list, err := s.uc.GetItems(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*avatv1.Item, 0, len(list))
+	for _, it := range list {
+		out = append(out, &avatv1.Item{Id: it.ID, Name: it.Name, Description: it.Description, IconPath: it.IconPath, CoinCost: it.CoinCost})
+	}
+	return &avatv1.GetItemsReply{Items: out}, nil
 }
-func (s *AvatarServiceService) UseItem(ctx context.Context, req *pb.UseItemRequest) (*pb.UseItemReply, error) {
-	return &pb.UseItemReply{}, nil
+
+// UseItem 使用道具（扣金币）
+func (s *AvatarService) UseItem(ctx context.Context, in *avatv1.UseItemRequest) (*avatv1.UseItemReply, error) {
+	userID, err := s.userIDFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.uc.UseItem(ctx, userID, in.GetItemId())
+	if err != nil {
+		return nil, err
+	}
+	return &avatv1.UseItemReply{Success: true, Message: "ok"}, nil
 }
-func (s *AvatarServiceService) Chat(ctx context.Context, req *pb.ChatRequest) (*pb.ChatReply, error) {
-	return &pb.ChatReply{}, nil
+
+// Chat 发送消息
+func (s *AvatarService) Chat(ctx context.Context, in *avatv1.ChatRequest) (*avatv1.ChatReply, error) {
+	userID, err := s.userIDFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	msg, err := s.uc.Chat(ctx, userID, in.GetContent())
+	if err != nil {
+		return nil, err
+	}
+	return &avatv1.ChatReply{
+		MessageId: msg.ID,
+		Content:   msg.Content,
+		CreatedAt: msg.CreatedAt.Format("2006-01-02 15:04:05"),
+	}, nil
 }
+
+// userIDFromCtx 从请求头解析 JWT 获取 user_id
+func (s *AvatarService) userIDFromCtx(ctx context.Context) (int64, error) {
+	ts, ok := transport.FromServerContext(ctx)
+	if !ok {
+		return 0, context.Canceled
+	}
+	tok, err := jwtutil.FromAuthHeader(ts.RequestHeader().Get("Authorization"))
+	if err != nil {
+		return 0, err
+	}
+	claims, err := jwtutil.Parse(s.jwtSecret, tok)
+	if err != nil {
+		return 0, err
+	}
+	return claims.UserID, nil
+}
+
+// ensure time import used
+var _ = time.Second

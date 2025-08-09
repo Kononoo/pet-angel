@@ -19,11 +19,8 @@ import (
 
 // go build -ldflags "-X main.Version=x.y.z"
 var (
-	// Name is the name of the compiled software.
-	Name string
-	// Version is the version of the compiled software.
-	Version string
-	// flagconf is the config flag.
+	Name     string
+	Version  string
 	flagconf string
 
 	id, _ = os.Hostname()
@@ -74,13 +71,12 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Auth, logger)
 	if err != nil {
 		panic(err)
 	}
 	defer cleanup()
 
-	// start and wait for stop signal
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
