@@ -100,7 +100,9 @@ func (r *CommunityRepoImpl) ListCategories(ctx context.Context) ([]*biz.Category
 		return []*biz.Category{}, nil
 	}
 	var rows []CategoryModel
-	if err := r.data.Gorm.WithContext(ctx).Order("id ASC").Find(&rows).Error; err != nil {
+	if err := r.data.Gorm.WithContext(ctx).
+		Order("id ASC").
+		Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	out := make([]*biz.Category, 0, len(rows))
@@ -118,9 +120,10 @@ func (r *CommunityRepoImpl) ListPosts(ctx context.Context, viewerID int64, categ
 	if r.data.Gorm == nil {
 		return 0, []*biz.CommunityPost{}, nil
 	}
-	q := r.data.Gorm.WithContext(ctx).Table("posts p").
-		Select("p.id,p.user_id,p.category_id,p.title,p.content,p.type,p.image_urls,p.video_url,p.cover_url,p.locate,p.tags,p.liked_count,p.comment_count,DATE_FORMAT(p.created_at,'%Y-%m-%d %H:%i:%s') as created_at,p.is_private, u.nickname, u.avatar").
-		Joins("JOIN users u ON p.user_id=u.id")
+	// 1) 先取 posts（不做 JOIN）
+	q := r.data.Gorm.WithContext(ctx).
+		Table("posts p").
+		Select("p.id,p.user_id,p.category_id,p.title,p.content,p.type,p.image_urls,p.video_url,p.cover_url,p.locate,p.tags,p.liked_count,p.comment_count,DATE_FORMAT(p.created_at,'%Y-%m-%d %H:%i:%s') as created_at,p.is_private")
 	if categoryID > 0 {
 		q = q.Where("p.category_id=?", categoryID)
 	}
@@ -136,60 +139,87 @@ func (r *CommunityRepoImpl) ListPosts(ctx context.Context, viewerID int64, categ
 		return 0, nil, err
 	}
 	offset := (page - 1) * pageSize
-	var rows []struct {
-		PostModel
-		Nickname string
-		Avatar   string
-	}
-	if err := q.Order(orderBy).Limit(int(pageSize)).Offset(int(offset)).Scan(&rows).Error; err != nil {
+	var rows []PostModel
+	if err := q.
+		Order(orderBy).
+		Limit(int(pageSize)).
+		Offset(int(offset)).
+		Scan(&rows).Error; err != nil {
 		return 0, nil, err
 	}
+	// 2) 批量取作者信息（users）
+	userIds := make([]int64, 0, len(rows))
+	for _, r0 := range rows {
+		userIds = append(userIds, r0.UserID)
+	}
+	userMap := map[int64]struct{ Nickname, Avatar string }{}
+	if len(userIds) > 0 {
+		var urows []struct {
+			ID       int64  `gorm:"column:id"`
+			Nickname string `gorm:"column:nickname"`
+			Avatar   string `gorm:"column:avatar"`
+		}
+		_ = r.data.Gorm.WithContext(ctx).
+			Table("users").
+			Select("id,nickname,avatar").
+			Where("id IN ?", userIds).
+			Scan(&urows).Error
+		for _, u := range urows {
+			userMap[u.ID] = struct{ Nickname, Avatar string }{u.Nickname, u.Avatar}
+		}
+	}
+	// 3) liked/followed 状态
 	likedSet := map[int64]bool{}
 	followSet := map[int64]bool{}
 	if viewerID > 0 && len(rows) > 0 {
-		ids := make([]int64, 0, len(rows))
-		userIds := make([]int64, 0, len(rows))
-		for _, r := range rows {
-			ids = append(ids, r.ID)
-			userIds = append(userIds, r.UserID)
+		postIds := make([]int64, 0, len(rows))
+		for _, r0 := range rows {
+			postIds = append(postIds, r0.ID)
 		}
 		var likeRows []struct{ TargetID int64 }
-		if err := r.data.Gorm.WithContext(ctx).Table("likes").Select("target_id").Where("user_id=? AND target_type=0", viewerID).Where("target_id IN ?", ids).Find(&likeRows).Error; err == nil {
+		if err := r.data.Gorm.WithContext(ctx).
+			Table("likes").
+			Select("target_id").
+			Where("user_id=? AND target_type=0", viewerID).
+			Where("target_id IN ?", postIds).
+			Find(&likeRows).Error; err == nil {
 			for _, lr := range likeRows {
 				likedSet[lr.TargetID] = true
 			}
 		}
 		var followRows []struct{ FolloweeID int64 }
-		if err := r.data.Gorm.WithContext(ctx).Table("user_follows").Select("followee_id").Where("follower_id=?", viewerID).Where("followee_id IN ?", userIds).Find(&followRows).Error; err == nil {
+		if err := r.data.Gorm.WithContext(ctx).
+			Table("user_follows").
+			Select("followee_id").
+			Where("follower_id=?", viewerID).
+			Where("followee_id IN ?", userIds).
+			Find(&followRows).Error; err == nil {
 			for _, fr := range followRows {
 				followSet[fr.FolloweeID] = true
 			}
 		}
 	}
+	// 4) 组装
 	out := make([]*biz.CommunityPost, 0, len(rows))
 	for _, p := range rows {
-		pp := p
+		u := userMap[p.UserID]
 		out = append(out, &biz.CommunityPost{
-			ID: pp.ID,
-			User: biz.UserBrief{
-				Id:       pp.UserID,
-				Nickname: pp.Nickname,
-				Avatar:   pp.Avatar,
-			},
-			CategoryID:   pp.CategoryID,
-			Title:        pp.Title,
-			Content:      pp.Content,
-			PostType:     pp.Type,
-			ImageUrls:    splitCSV(pp.ImageUrls),
-			VideoUrl:     pp.VideoUrl,
-			CoverUrl:     pp.CoverUrl,
-			Locate:       pp.Locate,
-			Tags:         splitCSV(pp.Tags),
-			LikedCount:   pp.LikedCount,
-			CommentCount: pp.CommentCount,
-			CreatedAt:    parseDT(pp.CreatedAt),
-			IsLiked:      likedSet[pp.ID],
-			IsPrivate:    pp.IsPrivate == 1,
+			ID:           p.ID,
+			User:         biz.UserBrief{Id: p.UserID, Nickname: u.Nickname, Avatar: u.Avatar},
+			CategoryID:   p.CategoryID,
+			Title:        p.Title,
+			Content:      p.Content,
+			PostType:     p.Type,
+			ImageUrls:    splitCSV(p.ImageUrls),
+			VideoUrl:     p.VideoUrl,
+			CoverUrl:     p.CoverUrl,
+			Locate:       p.Locate,
+			Tags:         splitCSV(p.Tags),
+			LikedCount:   p.LikedCount,
+			CommentCount: p.CommentCount,
+			CreatedAt:    parseDT(p.CreatedAt),
+			IsLiked:      likedSet[p.ID],
+			IsPrivate:    p.IsPrivate == 1,
 		})
 	}
 	return int32(total), out, nil
@@ -199,32 +229,38 @@ func (r *CommunityRepoImpl) GetPostDetail(ctx context.Context, viewerID, postID 
 	if r.data.Gorm == nil {
 		return nil, nil
 	}
-	var p struct {
-		PostModel
-		Nickname string
-		Avatar   string
-	}
+	// 1) 取帖子
+	var p PostModel
 	if err := r.data.Gorm.WithContext(ctx).
 		Table("posts p").
-		Select("p.id,p.user_id,p.category_id,p.title,p.content,p.type,p.image_urls,p.video_url,p.cover_url,p.locate,p.tags,p.liked_count,p.comment_count,DATE_FORMAT(p.created_at,'%Y-%m-%d %H:%i:%s') as created_at,p.is_private, u.nickname, u.avatar").
-		Joins("JOIN users u ON p.user_id=u.id").
+		Select("p.id,p.user_id,p.category_id,p.title,p.content,p.type,p.image_urls,p.video_url,p.cover_url,p.locate,p.tags,p.liked_count,p.comment_count,DATE_FORMAT(p.created_at,'%Y-%m-%d %H:%i:%s') as created_at,p.is_private").
 		Where("p.id=?", postID).
 		Scan(&p).Error; err != nil {
 		return nil, err
 	}
+	// 2) 取作者信息
+	var urow struct {
+		Nickname string
+		Avatar   string
+	}
+	_ = r.data.Gorm.WithContext(ctx).
+		Table("users").
+		Select("nickname,avatar").
+		Where("id=?", p.UserID).
+		Scan(&urow).Error
+	// 3) 是否点赞
 	isLiked := false
 	if viewerID > 0 {
 		var cnt int64
-		_ = r.data.Gorm.WithContext(ctx).Table("likes").Where("user_id=? AND target_type=0 AND target_id=?", viewerID, postID).Count(&cnt).Error
+		_ = r.data.Gorm.WithContext(ctx).
+			Table("likes").
+			Where("user_id=? AND target_type=0 AND target_id=?", viewerID, postID).
+			Count(&cnt).Error
 		isLiked = cnt > 0
 	}
 	return &biz.CommunityPost{
-		ID: p.ID,
-		User: biz.UserBrief{
-			Id:       p.UserID,
-			Nickname: p.Nickname,
-			Avatar:   p.Avatar,
-		},
+		ID:           p.ID,
+		User:         biz.UserBrief{Id: p.UserID, Nickname: urow.Nickname, Avatar: urow.Avatar},
 		CategoryID:   p.CategoryID,
 		Title:        p.Title,
 		Content:      p.Content,
@@ -272,21 +308,28 @@ func (r *CommunityRepoImpl) LikePost(ctx context.Context, userID, postID int64) 
 	if r.data.Gorm == nil {
 		return nil
 	}
-	_ = r.data.Gorm.WithContext(ctx).Where("user_id=? AND target_type=0 AND target_id=?", userID, postID).Delete(&LikeModel{}).Error
-	if err := r.data.Gorm.WithContext(ctx).Create(&LikeModel{UserID: userID, TargetType: 0, TargetID: postID}).Error; err != nil {
+	_ = r.data.Gorm.WithContext(ctx).
+		Where("user_id=? AND target_type=0 AND target_id=?", userID, postID).
+		Delete(&LikeModel{}).Error
+	if err := r.data.Gorm.WithContext(ctx).
+		Create(&LikeModel{UserID: userID, TargetType: 0, TargetID: postID}).Error; err != nil {
 		return err
 	}
-	return r.data.Gorm.WithContext(ctx).Exec("UPDATE posts SET liked_count=liked_count+1 WHERE id=?", postID).Error
+	return r.data.Gorm.WithContext(ctx).
+		Exec("UPDATE posts SET liked_count=liked_count+1 WHERE id=?", postID).Error
 }
 
 func (r *CommunityRepoImpl) UnlikePost(ctx context.Context, userID, postID int64) error {
 	if r.data.Gorm == nil {
 		return nil
 	}
-	if err := r.data.Gorm.WithContext(ctx).Where("user_id=? AND target_type=0 AND target_id=?", userID, postID).Delete(&LikeModel{}).Error; err != nil {
+	if err := r.data.Gorm.WithContext(ctx).
+		Where("user_id=? AND target_type=0 AND target_id=?", userID, postID).
+		Delete(&LikeModel{}).Error; err != nil {
 		return err
 	}
-	return r.data.Gorm.WithContext(ctx).Exec("UPDATE posts SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", postID).Error
+	return r.data.Gorm.WithContext(ctx).
+		Exec("UPDATE posts SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", postID).Error
 }
 
 func (r *CommunityRepoImpl) ListComments(ctx context.Context, viewerID, postID int64, page, pageSize int32) (int32, []*biz.CommunityComment, error) {
@@ -294,19 +337,17 @@ func (r *CommunityRepoImpl) ListComments(ctx context.Context, viewerID, postID i
 		return 0, []*biz.CommunityComment{}, nil
 	}
 	var total int64
-	if err := r.data.Gorm.WithContext(ctx).Model(&CommentModel{}).Where("post_id=?", postID).Count(&total).Error; err != nil {
+	if err := r.data.Gorm.WithContext(ctx).
+		Model(&CommentModel{}).
+		Where("post_id=?", postID).
+		Count(&total).Error; err != nil {
 		return 0, nil, err
 	}
 	offset := (page - 1) * pageSize
-	var rows []struct {
-		CommentModel
-		Nickname string
-		Avatar   string
-	}
+	var rows []CommentModel
 	if err := r.data.Gorm.WithContext(ctx).
 		Table("comments c").
-		Select("c.id,c.post_id,c.user_id,c.content,c.liked_count,DATE_FORMAT(c.created_at,'%Y-%m-%d %H:%i:%s') as created_at, u.nickname, u.avatar").
-		Joins("JOIN users u ON c.user_id=u.id").
+		Select("c.id,c.post_id,c.user_id,c.content,c.liked_count,DATE_FORMAT(c.created_at,'%Y-%m-%d %H:%i:%s') as created_at").
 		Where("c.post_id=?", postID).
 		Order("c.id DESC").
 		Limit(int(pageSize)).
@@ -314,14 +355,40 @@ func (r *CommunityRepoImpl) ListComments(ctx context.Context, viewerID, postID i
 		Scan(&rows).Error; err != nil {
 		return 0, nil, err
 	}
+	// 批量取用户昵称、头像
+	userIds := make([]int64, 0, len(rows))
+	for _, r0 := range rows {
+		userIds = append(userIds, r0.UserID)
+	}
+	userMap := map[int64]struct{ Nickname, Avatar string }{}
+	if len(userIds) > 0 {
+		var urows []struct {
+			ID       int64
+			Nickname string
+			Avatar   string
+		}
+		_ = r.data.Gorm.WithContext(ctx).
+			Table("users").
+			Select("id,nickname,avatar").
+			Where("id IN ?", userIds).
+			Scan(&urows).Error
+		for _, u := range urows {
+			userMap[u.ID] = struct{ Nickname, Avatar string }{u.Nickname, u.Avatar}
+		}
+	}
 	likedSet := map[int64]bool{}
 	if viewerID > 0 && len(rows) > 0 {
 		ids := make([]int64, 0, len(rows))
-		for _, r := range rows {
-			ids = append(ids, r.ID)
+		for _, r0 := range rows {
+			ids = append(ids, r0.ID)
 		}
 		var likeRows []struct{ TargetID int64 }
-		if err := r.data.Gorm.WithContext(ctx).Table("likes").Select("target_id").Where("user_id=? AND target_type=1", viewerID).Where("target_id IN ?", ids).Find(&likeRows).Error; err == nil {
+		if err := r.data.Gorm.WithContext(ctx).
+			Table("likes").
+			Select("target_id").
+			Where("user_id=? AND target_type=1", viewerID).
+			Where("target_id IN ?", ids).
+			Find(&likeRows).Error; err == nil {
 			for _, lr := range likeRows {
 				likedSet[lr.TargetID] = true
 			}
@@ -329,18 +396,14 @@ func (r *CommunityRepoImpl) ListComments(ctx context.Context, viewerID, postID i
 	}
 	out := make([]*biz.CommunityComment, 0, len(rows))
 	for _, c := range rows {
-		cc := c
+		u := userMap[c.UserID]
 		out = append(out, &biz.CommunityComment{
-			ID: cc.ID,
-			User: biz.UserBrief{
-				Id:       cc.UserID,
-				Nickname: cc.Nickname,
-				Avatar:   cc.Avatar,
-			},
-			Content:    cc.Content,
-			LikedCount: cc.LikedCount,
-			CreatedAt:  parseDT(cc.CreatedAt),
-			IsLiked:    likedSet[cc.ID],
+			ID:         c.ID,
+			User:       biz.UserBrief{Id: c.UserID, Nickname: u.Nickname, Avatar: u.Avatar},
+			Content:    c.Content,
+			LikedCount: c.LikedCount,
+			CreatedAt:  parseDT(c.CreatedAt),
+			IsLiked:    likedSet[c.ID],
 		})
 	}
 	return int32(total), out, nil
@@ -350,15 +413,12 @@ func (r *CommunityRepoImpl) CreateComment(ctx context.Context, userID, postID in
 	if r.data.Gorm == nil {
 		return 0, nil
 	}
-	row := &CommentModel{
-		PostID:  postID,
-		UserID:  userID,
-		Content: content,
-	}
+	row := &CommentModel{PostID: postID, UserID: userID, Content: content}
 	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
 		return 0, err
 	}
-	_ = r.data.Gorm.WithContext(ctx).Exec("UPDATE posts SET comment_count=comment_count+1 WHERE id=?", postID).Error
+	_ = r.data.Gorm.WithContext(ctx).
+		Exec("UPDATE posts SET comment_count=comment_count+1 WHERE id=?", postID).Error
 	return row.ID, nil
 }
 
@@ -366,19 +426,26 @@ func (r *CommunityRepoImpl) LikeComment(ctx context.Context, userID, commentID i
 	if r.data.Gorm == nil {
 		return nil
 	}
-	_ = r.data.Gorm.WithContext(ctx).Where("user_id=? AND target_type=1 AND target_id=?", userID, commentID).Delete(&LikeModel{}).Error
-	if err := r.data.Gorm.WithContext(ctx).Create(&LikeModel{UserID: userID, TargetType: 1, TargetID: commentID}).Error; err != nil {
+	_ = r.data.Gorm.WithContext(ctx).
+		Where("user_id=? AND target_type=1 AND target_id=?", userID, commentID).
+		Delete(&LikeModel{}).Error
+	if err := r.data.Gorm.WithContext(ctx).
+		Create(&LikeModel{UserID: userID, TargetType: 1, TargetID: commentID}).Error; err != nil {
 		return err
 	}
-	return r.data.Gorm.WithContext(ctx).Exec("UPDATE comments SET liked_count=liked_count+1 WHERE id=?", commentID).Error
+	return r.data.Gorm.WithContext(ctx).
+		Exec("UPDATE comments SET liked_count=liked_count+1 WHERE id=?", commentID).Error
 }
 
 func (r *CommunityRepoImpl) UnlikeComment(ctx context.Context, userID, commentID int64) error {
 	if r.data.Gorm == nil {
 		return nil
 	}
-	if err := r.data.Gorm.WithContext(ctx).Where("user_id=? AND target_type=1 AND target_id=?", userID, commentID).Delete(&LikeModel{}).Error; err != nil {
+	if err := r.data.Gorm.WithContext(ctx).
+		Where("user_id=? AND target_type=1 AND target_id=?", userID, commentID).
+		Delete(&LikeModel{}).Error; err != nil {
 		return err
 	}
-	return r.data.Gorm.WithContext(ctx).Exec("UPDATE comments SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", commentID).Error
+	return r.data.Gorm.WithContext(ctx).
+		Exec("UPDATE comments SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", commentID).Error
 }

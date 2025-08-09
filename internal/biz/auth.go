@@ -12,15 +12,20 @@ import (
 
 // AuthRepo 抽象
 // 注意：与 data 层实现解耦
+// 新增：GetModelPath 读取 pet_models.path 以保证 model_url 为最新
+
 type AuthRepo interface {
 	GetByUsername(ctx context.Context, username string) (*User, error)
 	GetByID(ctx context.Context, userID int64) (*User, error)
 	Create(ctx context.Context, user *User) (int64, error)
 	UpdateInfo(ctx context.Context, user *User) error
 	UpdateCoins(ctx context.Context, userID int64, delta int32) error
+
+	GetModelPath(ctx context.Context, modelID int64) (string, error)
 }
 
 // AuthUsecase 用例
+
 type AuthUsecase struct {
 	repo AuthRepo
 	cfg  *conf.Auth
@@ -39,6 +44,7 @@ func (uc *AuthUsecase) Login(ctx context.Context, username, password string) (us
 			Username:  username,
 			Password:  password,
 			Nickname:  username,
+			ModelURL:  "/models/Dog_1.glb",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
@@ -73,9 +79,25 @@ func (uc *AuthUsecase) Login(ctx context.Context, username, password string) (us
 }
 
 func (uc *AuthUsecase) GetUserInfo(ctx context.Context, userID int64) (*User, error) {
-	return uc.repo.GetByID(ctx, userID)
+	u, err := uc.repo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	// 始终以 pet_models.path 为准，确保最新
+	if u != nil && u.ModelID > 0 {
+		if path, perr := uc.repo.GetModelPath(ctx, u.ModelID); perr == nil && path != "" {
+			u.ModelURL = path
+		}
+	}
+	return u, nil
 }
 
 func (uc *AuthUsecase) UpdateUserInfo(ctx context.Context, user *User) error {
+	// 如果更新了模型ID，则联动刷新 model_url（来源 pet_models.path）
+	if user != nil && user.ModelID > 0 {
+		if path, err := uc.repo.GetModelPath(ctx, user.ModelID); err == nil && path != "" {
+			user.ModelURL = path
+		}
+	}
 	return uc.repo.UpdateInfo(ctx, user)
 }

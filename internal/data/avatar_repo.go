@@ -81,9 +81,26 @@ func (r *AvatarRepo) PetModelExists(ctx context.Context, modelID int64) (bool, e
 	return count > 0, tx.Error
 }
 
-// SetUserModel 更新用户当前模型
+// GetModelPath 获取模型路径
+func (r *AvatarRepo) GetModelPath(ctx context.Context, modelID int64) (string, error) {
+	var row PetModelDO
+	if err := r.data.Gorm.WithContext(ctx).Select("path").First(&row, modelID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", biz.ErrAvatarNotFound
+		}
+		return "", err
+	}
+	return row.Path, nil
+}
+
+// SetUserModel 更新用户当前模型（同时刷新 model_url）
 func (r *AvatarRepo) SetUserModel(ctx context.Context, userID, modelID int64) error {
-	tx := r.data.Gorm.WithContext(ctx).Exec("UPDATE users SET model_id=?, updated_at=NOW() WHERE id=?", modelID, userID)
+	path, err := r.GetModelPath(ctx, modelID)
+	if err != nil {
+		return err
+	}
+	tx := r.data.Gorm.WithContext(ctx).
+		Exec("UPDATE users SET model_id=?, model_url=?, updated_at=NOW() WHERE id=?", modelID, path, userID)
 	return tx.Error
 }
 

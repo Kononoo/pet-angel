@@ -17,7 +17,7 @@ type UserUnlockRecordDO struct {
 	ID        int64 `gorm:"column:id;primaryKey;autoIncrement"`
 	UserID    int64 `gorm:"column:user_id;not null"`
 	MessageID int64 `gorm:"column:message_id;not null"`
-	Coins     int32 `gorm:"column:coins;not null"`
+	Coins     int32 `gorm:"column:coins_spent;not null"`
 }
 
 func (UserUnlockRecordDO) TableName() string { return "user_unlock_records" }
@@ -33,7 +33,9 @@ func (r *MessageRepoImpl) ListMessages(ctx context.Context, userID int64, onlyNo
 	if r.data.Gorm == nil {
 		return 0, nil, errors.New("gorm not initialized")
 	}
-	q := r.data.Gorm.WithContext(ctx).Model(&MessageDO{}).Where("user_id=?", userID)
+	q := r.data.Gorm.WithContext(ctx).
+		Model(&MessageDO{}).
+		Where("user_id=?", userID)
 	if onlyNotes {
 		q = q.Where("message_type=?", 1)
 	}
@@ -43,7 +45,11 @@ func (r *MessageRepoImpl) ListMessages(ctx context.Context, userID int64, onlyNo
 	}
 	var rows []MessageDO
 	offset := int((page - 1) * pageSize)
-	if err := q.Order("created_at desc, id desc").Limit(int(pageSize)).Offset(offset).Find(&rows).Error; err != nil {
+	if err := q.
+		Order("created_at desc, id desc").
+		Limit(int(pageSize)).
+		Offset(offset).
+		Find(&rows).Error; err != nil {
 		return 0, nil, err
 	}
 	list := make([]*biz.Message, 0, len(rows))
@@ -66,14 +72,25 @@ func (r *MessageRepoImpl) ListMessages(ctx context.Context, userID int64, onlyNo
 // GetMessageByID 查询单条
 func (r *MessageRepoImpl) GetMessageByID(ctx context.Context, userID, messageID int64) (*biz.Message, error) {
 	var m MessageDO
-	tx := r.data.Gorm.WithContext(ctx).Where("id=? AND user_id=?", messageID, userID).Take(&m)
+	tx := r.data.Gorm.WithContext(ctx).
+		Where("id=? AND user_id=?", messageID, userID).
+		Take(&m)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, biz.ErrMessageNotFound
 		}
 		return nil, tx.Error
 	}
-	return &biz.Message{ID: m.ID, UserID: m.UserID, Sender: m.Sender, MessageType: m.MessageType, IsLocked: m.IsLocked, UnlockCoins: m.UnlockCoins, Content: m.Content, CreatedAt: m.CreatedAt}, nil
+	return &biz.Message{
+		ID:          m.ID,
+		UserID:      m.UserID,
+		Sender:      m.Sender,
+		MessageType: m.MessageType,
+		IsLocked:    m.IsLocked,
+		UnlockCoins: m.UnlockCoins,
+		Content:     m.Content,
+		CreatedAt:   m.CreatedAt,
+	}, nil
 }
 
 // UnlockMessage 事务扣金币并解锁
@@ -83,7 +100,10 @@ func (r *MessageRepoImpl) UnlockMessage(ctx context.Context, userID, messageID i
 	err := r.data.Gorm.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 锁定消息记录
 		var m MessageDO
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id=? AND user_id=? AND message_type=?", messageID, userID, 1).Take(&m).Error; err != nil {
+		if err := tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id=? AND user_id=? AND message_type=?", messageID, userID, 1).
+			Take(&m).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return biz.ErrMessageNotFound
 			}
@@ -93,7 +113,11 @@ func (r *MessageRepoImpl) UnlockMessage(ctx context.Context, userID, messageID i
 			// 已解锁，直接返回当前信息与余额
 			type urow struct{ Coins int32 }
 			var ur urow
-			if err := tx.Table("users").Select("coins").Where("id=?", userID).Take(&ur).Error; err != nil {
+			if err := tx.
+				Table("users").
+				Select("coins").
+				Where("id=?", userID).
+				Take(&ur).Error; err != nil {
 				return err
 			}
 			remaining = ur.Coins
@@ -103,7 +127,12 @@ func (r *MessageRepoImpl) UnlockMessage(ctx context.Context, userID, messageID i
 		// 扣金币
 		type urow struct{ Coins int32 }
 		var ur urow
-		if err := tx.Table("users").Clauses(clause.Locking{Strength: "UPDATE"}).Select("coins").Where("id=?", userID).Take(&ur).Error; err != nil {
+		if err := tx.
+			Table("users").
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Select("coins").
+			Where("id=?", userID).
+			Take(&ur).Error; err != nil {
 			return err
 		}
 		if ur.Coins < m.UnlockCoins {
@@ -114,7 +143,10 @@ func (r *MessageRepoImpl) UnlockMessage(ctx context.Context, userID, messageID i
 			return err
 		}
 		// 解锁消息
-		if err := tx.Model(&MessageDO{}).Where("id=?", m.ID).Update("is_locked", false).Error; err != nil {
+		if err := tx.
+			Model(&MessageDO{}).
+			Where("id=?", m.ID).
+			Update("is_locked", false).Error; err != nil {
 			return err
 		}
 		// 记录解锁流水
