@@ -2,6 +2,7 @@ package server
 
 import (
 	authv1 "pet-angel/api/auth/v1"
+	avatv1 "pet-angel/api/avatar/v1"
 	communityv1 "pet-angel/api/community/v1"
 	v1 "pet-angel/api/helloworld/v1"
 	userv1 "pet-angel/api/user/v1"
@@ -14,7 +15,7 @@ import (
 )
 
 // NewGRPCServer new a gRPC server.
-func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, logger log.Logger) *grpc.Server {
+func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, avatar *service.AvatarService, logger log.Logger) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
 			recovery.Recovery(),
@@ -35,5 +36,6 @@ func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, auth *servic
 	authv1.RegisterAuthServiceServer(srv, auth)
 	userv1.RegisterUserServiceServer(srv, user)
 	communityv1.RegisterCommunityServiceServer(srv, community)
+	avatv1.RegisterAvatarServiceServer(srv, avatar)
 	return srv
 }

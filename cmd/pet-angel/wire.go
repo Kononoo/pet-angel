@@ -28,23 +28,27 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger 
 		data.NewAuthRepo,
 		data.NewUserRepo,
 		data.NewCommunityRepo,
+		data.NewAvatarRepo,
 
 		// interface bindings
 		wire.Bind(new(biz.GreeterRepo), new(*data.GreeterRepo)),
 		wire.Bind(new(biz.AuthRepo), new(*data.AuthRepo)),
 		wire.Bind(new(biz.CommunityRepo), new(*data.CommunityRepoImpl)),
+		wire.Bind(new(biz.AvatarRepo), new(*data.AvatarRepo)),
 
 		// biz
 		biz.NewGreeterUsecase,
 		biz.NewAuthUsecase,
 		biz.NewUserUsecase,
 		biz.NewCommunityUsecase,
+		biz.NewAvatarUsecase,
 
 		// service
 		service.NewGreeterService,
 		service.NewAuthService,
 		service.NewUserService,
 		service.NewCommunityService,
+		service.NewAvatarService,
 
 		// server
 		server.NewHTTPServer,

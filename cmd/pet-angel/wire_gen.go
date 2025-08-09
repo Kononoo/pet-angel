@@ -40,8 +40,11 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger 
 	communityRepoImpl := data.NewCommunityRepo(dataData)
 	communityUsecase := biz.NewCommunityUsecase(communityRepoImpl)
 	communityService := service.NewCommunityService(communityUsecase, authConf)
-	grpcServer := server.NewGRPCServer(srv, greeterService, authService, userService, communityService, logger)
-	httpServer := server.NewHTTPServer(srv, greeterService, authService, userService, communityService, logger)
+	avatarRepo := data.NewAvatarRepo(dataData)
+	avatarUsecase := biz.NewAvatarUsecase(avatarRepo)
+	avatarService := service.NewAvatarService(avatarUsecase, authConf)
+	grpcServer := server.NewGRPCServer(srv, greeterService, authService, userService, communityService, avatarService, logger)
+	httpServer := server.NewHTTPServer(srv, greeterService, authService, userService, communityService, avatarService, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()

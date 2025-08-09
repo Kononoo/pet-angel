@@ -43,6 +43,6 @@ message Data {
 
 // 认证配置
 message Auth {
-  string jwt_secret = 1;         // HMAC 密钥
-  google.protobuf.Duration jwt_ttl = 2; // token 有效期
+  string jwt_secret = 1;                  // HMAC 密钥
+  google.protobuf.Duration jwt_ttl = 2;   // token 有效期
 }

@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	authv1 "pet-angel/api/auth/v1"
+	avatv1 "pet-angel/api/avatar/v1"
 	communityv1 "pet-angel/api/community/v1"
-	v1 "pet-angel/api/helloworld/v1"
+	greeterv1 "pet-angel/api/helloworld/v1"
 	userv1 "pet-angel/api/user/v1"
 	"pet-angel/internal/conf"
 	"pet-angel/internal/service"
@@ -102,7 +103,7 @@ func ErrorEncoder(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, logger log.Logger) *khttp.Server {
+func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, avatar *service.AvatarService, logger log.Logger) *khttp.Server {
 	var opts = []khttp.ServerOption{
 		khttp.Middleware(
 			recovery.Recovery(),
@@ -121,9 +122,10 @@ func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, auth *servic
 	}
 
 	srv := khttp.NewServer(opts...)
-	v1.RegisterGreeterHTTPServer(srv, greeter)
+	greeterv1.RegisterGreeterHTTPServer(srv, greeter)
 	authv1.RegisterAuthServiceHTTPServer(srv, auth)
 	userv1.RegisterUserServiceHTTPServer(srv, user)
 	communityv1.RegisterCommunityServiceHTTPServer(srv, community)
+	avatv1.RegisterAvatarServiceHTTPServer(srv, avatar)
 	return srv
 }

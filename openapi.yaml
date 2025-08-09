@@ -6,25 +6,6 @@ info:
     title: ""
     version: 0.0.1
 paths:
-    /helloworld/{name}:
-        get:
-            tags:
-                - Greeter
-            description: Sends a greeting
-            operationId: Greeter_SayHello
-            parameters:
-                - name: name
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helloworld.v1.HelloReply'
     /v1/auth/login:
         post:
             tags:
@@ -1139,16 +1120,6 @@ components:
                 avatar:
                     type: string
             description: 用户简要
-        helloworld.v1.HelloReply:
-            type: object
-            properties:
-                message:
-                    type: string
-                pet:
-                    type: string
-                hello:
-                    type: string
-            description: The response message containing the greetings
 tags:
     - name: AuthService
       description: |-
@@ -1168,8 +1139,6 @@ tags:
          - 分类：列出帖子分类
          - 帖子：列表/详情/发帖/点赞
          - 评论：列表/发表/点赞
-    - name: Greeter
-      description: The greeting service definition.
     - name: MessageService
       description: |-
         消息/小纸条服务
