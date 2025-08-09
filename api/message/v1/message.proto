@@ -3,150 +3,48 @@ syntax = "proto3";
 package api.message.v1;
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "pet-angel/api/message/v1;v1";
 
-// 小纸条服务
+// 消息/小纸条服务
+// - 列表：按时间倒序分页
+// - 小纸条解锁：扣金币并返回完整内容
 service MessageService {
-  // 获取小纸条列表
+  // 获取消息列表（包含聊天与小纸条）
   rpc GetMessageList(GetMessageListRequest) returns (GetMessageListReply) {
-    option (google.api.http) = {
-      get: "/v1/message/list"
-    };
+    option (google.api.http) = { get: "/v1/message/list" };
   }
-
-  // 获取小纸条详情
-  rpc GetMessageDetail(GetMessageDetailRequest) returns (GetMessageDetailReply) {
-    option (google.api.http) = {
-      get: "/v1/message/{message_id}"
-    };
-  }
-
-  // 解锁小纸条
+  // 解锁一条小纸条（message_type=1）
   rpc UnlockMessage(UnlockMessageRequest) returns (UnlockMessageReply) {
-    option (google.api.http) = {
-      post: "/v1/message/{message_id}/unlock"
-    };
-  }
-
-  // 生成小纸条
-  rpc GenerateMessage(GenerateMessageRequest) returns (GenerateMessageReply) {
-    option (google.api.http) = {
-      post: "/v1/message/generate"
-      body: "*"
-    };
-  }
-
-  // 获取用户金币余额
-  rpc GetUserCoins(GetUserCoinsRequest) returns (GetUserCoinsReply) {
-    option (google.api.http) = {
-      get: "/v1/message/user-coins"
-    };
-  }
-
-  // 获取解锁记录
-  rpc GetUnlockHistory(GetUnlockHistoryRequest) returns (GetUnlockHistoryReply) {
-    option (google.api.http) = {
-      get: "/v1/message/unlock-history"
-    };
+    option (google.api.http) = { post: "/v1/message/{message_id}/unlock" };
   }
 }
 
-// 小纸条信息
+// 消息体
 message Message {
-  int64 message_id = 1;
-  string content = 2;
-  string message_type = 3; // free, paid
-  int32 unlock_coins = 4;
-  int64 pet_id = 5;
-  bool is_unlocked = 6;
-  google.protobuf.Timestamp unlock_time = 7;
-  google.protobuf.Timestamp created_at = 8;
+  int64 id = 1;              // 消息ID
+  int32 sender = 2;          // 发送方 0用户 1AI
+  int32 message_type = 3;    // 0聊天 1小纸条
+  bool is_locked = 4;        // 小纸条是否锁定
+  int32 unlock_coins = 5;    // 小纸条解锁所需金币
+  string content = 6;        // 文本内容（锁定时可为空或返回占位）
+  string created_at = 7;     // 创建时间 YYYY-MM-DD HH:MM:SS
 }
 
-// 用户金币信息
-message UserCoins {
-  int64 user_id = 1;
-  int32 coin_balance = 2;
-  int32 total_earned = 3;
-  int32 total_spent = 4;
-  google.protobuf.Timestamp updated_at = 5;
-}
-
-// 解锁记录
-message UnlockRecord {
-  int64 record_id = 1;
-  int64 user_id = 2;
-  int64 message_id = 3;
-  int32 coins_spent = 4;
-  google.protobuf.Timestamp unlock_time = 5;
-  Message message = 6;
-}
-
-// 获取小纸条列表请求
+// 消息列表请求
 message GetMessageListRequest {
-  string message_type = 1; // all, free, paid
-  int32 page = 2;
-  int32 page_size = 3;
+  int32 page = 1;            // 页码，从1开始
+  int32 page_size = 2;       // 每页条数（默认20，最大100）
+  bool only_notes = 3;       // 仅小纸条
 }
-
-// 获取小纸条列表响应
-message GetMessageListReply {
-  repeated Message messages = 1;
-  int32 total = 2;
-}
-
-// 获取小纸条详情请求
-message GetMessageDetailRequest {
-  int64 message_id = 1;
-}
-
-// 获取小纸条详情响应
-message GetMessageDetailReply {
-  Message message = 1;
-}
+// 消息列表响应
+message GetMessageListReply { int32 total = 1; repeated Message list = 2; }
 
 // 解锁小纸条请求
-message UnlockMessageRequest {
-  int64 message_id = 1;
-}
-
+message UnlockMessageRequest { int64 message_id = 1; } // 目标消息ID
 // 解锁小纸条响应
 message UnlockMessageReply {
-  bool success = 1;
-  string message = 2;
-  int32 remaining_coins = 3;
-}
-
-// 生成小纸条请求
-message GenerateMessageRequest {
-  int64 pet_id = 1;
-  string prompt = 2;
-}
-
-// 生成小纸条响应
-message GenerateMessageReply {
-  Message message = 1;
-}
-
-// 获取用户金币余额请求
-message GetUserCoinsRequest {
-}
-
-// 获取用户金币余额响应
-message GetUserCoinsReply {
-  UserCoins user_coins = 1;
-}
-
-// 获取解锁记录请求
-message GetUnlockHistoryRequest {
-  int32 page = 1;
-  int32 page_size = 2;
-}
-
-// 获取解锁记录响应
-message GetUnlockHistoryReply {
-  repeated UnlockRecord records = 1;
-  int32 total = 2;
+  bool success = 1;          // 是否成功
+  int32 remaining_coins = 2; // 解锁后剩余金币
+  Message message = 3;       // 解锁后的完整消息
 } 

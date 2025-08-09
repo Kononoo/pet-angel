@@ -9,7 +9,7 @@ import (
 type Message struct {
 	MessageID     int64     `json:"message_id"`
 	Content       string    `json:"content"`
-	MessageType   string    `json:"message_type"` // free, paid
+	MessageType   string    `json:"message_type"`
 	UnlockCoins   int32     `json:"unlock_coins"`
 	PetID         int64     `json:"pet_id"`
 	IsUnlocked    bool      `json:"is_unlocked"`

@@ -3,220 +3,75 @@ syntax = "proto3";
 package api.avatar.v1;
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "pet-angel/api/avatar/v1;v1";
 
-// 虚拟形象服务
+// 虚拟形象/道具/聊天 服务
+// - 模型：列出可用宠物模型并可切换
+// - 道具：列出与使用（消费金币或数量的策略在服务端控制）
+// - 聊天：向 AI 发送一条消息，可选返回 AI 的同步应答
 service AvatarService {
-  // 获取虚拟形象列表
-  rpc GetAvatarList(GetAvatarListRequest) returns (GetAvatarListReply) {
-    option (google.api.http) = {
-      get: "/v1/avatar/list"
-    };
+  // 获取可用的宠物模型列表
+  rpc GetModels(GetModelsRequest) returns (GetModelsReply) {
+    option (google.api.http) = { get: "/v1/avatar/models" };
   }
-
-  // 获取用户当前形象
-  rpc GetCurrentAvatar(GetCurrentAvatarRequest) returns (GetCurrentAvatarReply) {
-    option (google.api.http) = {
-      get: "/v1/avatar/current"
-    };
+  // 设置当前宠物模型
+  rpc SetPetModel(SetPetModelRequest) returns (SetPetModelReply) {
+    option (google.api.http) = { post: "/v1/avatar/model" body: "*" };
   }
-
-  // 切换虚拟形象
-  rpc SwitchAvatar(SwitchAvatarRequest) returns (SwitchAvatarReply) {
-    option (google.api.http) = {
-      post: "/v1/avatar/switch"
-      body: "*"
-    };
-  }
-
   // 获取道具列表
-  rpc GetPropList(GetPropListRequest) returns (GetPropListReply) {
-    option (google.api.http) = {
-      get: "/v1/avatar/props"
-    };
+  rpc GetItems(GetItemsRequest) returns (GetItemsReply) {
+    option (google.api.http) = { get: "/v1/avatar/items" };
   }
-
-  // 使用道具
-  rpc UseProp(UsePropRequest) returns (UsePropReply) {
-    option (google.api.http) = {
-      post: "/v1/avatar/props/use"
-      body: "*"
-    };
+  // 使用一个道具（例如喂食/玩具等）
+  rpc UseItem(UseItemRequest) returns (UseItemReply) {
+    option (google.api.http) = { post: "/v1/avatar/use-item" body: "*" };
   }
-
-  // 获取道具分类
-  rpc GetPropCategories(GetPropCategoriesRequest) returns (GetPropCategoriesReply) {
-    option (google.api.http) = {
-      get: "/v1/avatar/prop-categories"
-    };
-  }
-
-  // 获取对话记录
-  rpc GetChatHistory(GetChatHistoryRequest) returns (GetChatHistoryReply) {
-    option (google.api.http) = {
-      get: "/v1/avatar/chat-history"
-    };
-  }
-
-  // 发送消息
-  rpc SendMessage(SendMessageRequest) returns (SendMessageReply) {
-    option (google.api.http) = {
-      post: "/v1/avatar/send-message"
-      body: "*"
-    };
-  }
-
-  // 生成虚拟形象
-  rpc GenerateAvatar(GenerateAvatarRequest) returns (GenerateAvatarReply) {
-    option (google.api.http) = {
-      post: "/v1/avatar/generate"
-      body: "*"
-    };
+  // 发送一条聊天消息给 AI（同步返回本条消息；可选返回AI的即时回复）
+  rpc Chat(ChatRequest) returns (ChatReply) {
+    option (google.api.http) = { post: "/v1/avatar/chat" body: "*" };
   }
 }
 
-// 虚拟形象信息
-message Avatar {
-  int64 avatar_id = 1;
-  string name = 2;
-  string resource_path = 3;
-  string idle_animation = 4;
-  string switch_animation = 5;
-  int32 sort_order = 6;
-  bool is_default = 7;
-  bool is_unlocked = 8;
-  google.protobuf.Timestamp created_at = 9;
+// 宠物模型
+message PetModel {
+  int64 id = 1;          // 模型ID
+  string name = 2;       // 模型名称
+  string path = 3;       // 模型资源URL（MinIO）
+  int32 model_type = 4;  // 0=猫 1=狗
+  bool is_default = 5;   // 是否默认
+  int32 sort_order = 6;  // 排序序号
 }
 
-// 用户当前形象
-message UserAvatar {
-  int64 user_id = 1;
-  int64 avatar_id = 2;
-  google.protobuf.Timestamp last_switch_time = 3;
-  Avatar avatar = 4;
-}
+message GetModelsRequest {} // 无入参
+message GetModelsReply { repeated PetModel models = 1; } // 模型列表
 
-// 道具信息
-message Prop {
-  int64 prop_id = 1;
-  string name = 2;
-  int64 category_id = 3;
-  string icon_path = 4;
-  int32 coin_cost = 5;
-  string effect_description = 6;
-  int32 user_quantity = 7;
-}
+// 设置当前模型
+message SetPetModelRequest { int64 model_id = 1; } // 目标模型ID
+message SetPetModelReply { bool success = 1; }     // 是否成功
 
-// 道具分类
-message PropCategory {
-  int64 category_id = 1;
-  string name = 2;
-  repeated int64 prop_ids = 3;
-  int32 sort_order = 4;
+// 道具
+message Item {
+  int64 id = 1;           // 道具ID
+  string name = 2;        // 道具名称
+  string description = 3; // 描述文案
+  string icon_path = 4;   // 图标URL
+  int32 coin_cost = 5;    // 消耗金币
 }
+message GetItemsRequest {}                 // 无入参
+message GetItemsReply { repeated Item items = 1; } // 道具列表
 
-// 聊天消息
-message ChatMessage {
-  int64 message_id = 1;
-  int64 user_id = 2;
-  string sender = 3; // user, avatar
-  string content = 4;
-  string message_type = 5; // text, prop_use, note
-  int64 related_id = 6; // prop_id or note_id
-  google.protobuf.Timestamp created_at = 7;
-}
+// 使用道具
+message UseItemRequest { int64 item_id = 1; }          // 道具ID
+message UseItemReply { bool success = 1; string message = 2; } // 使用结果与提示
 
-// 获取虚拟形象列表请求
-message GetAvatarListRequest {
-}
-
-// 获取虚拟形象列表响应
-message GetAvatarListReply {
-  repeated Avatar avatars = 1;
-}
-
-// 获取用户当前形象请求
-message GetCurrentAvatarRequest {
-}
-
-// 获取用户当前形象响应
-message GetCurrentAvatarReply {
-  UserAvatar user_avatar = 1;
-}
-
-// 切换虚拟形象请求
-message SwitchAvatarRequest {
-  int64 avatar_id = 1;
-}
-
-// 切换虚拟形象响应
-message SwitchAvatarReply {
-  UserAvatar user_avatar = 1;
-}
-
-// 获取道具列表请求
-message GetPropListRequest {
-  int64 category_id = 1;
-}
-
-// 获取道具列表响应
-message GetPropListReply {
-  repeated Prop props = 1;
-}
-
-// 使用道具请求
-message UsePropRequest {
-  int64 prop_id = 1;
-}
-
-// 使用道具响应
-message UsePropReply {
-  bool success = 1;
-  string message = 2;
-}
-
-// 获取道具分类请求
-message GetPropCategoriesRequest {
-}
-
-// 获取道具分类响应
-message GetPropCategoriesReply {
-  repeated PropCategory categories = 1;
-}
-
-// 获取对话记录请求
-message GetChatHistoryRequest {
-  int32 page = 1;
-  int32 page_size = 2;
-}
-
-// 获取对话记录响应
-message GetChatHistoryReply {
-  repeated ChatMessage messages = 1;
-  int32 total = 2;
-}
-
-// 发送消息请求
-message SendMessageRequest {
-  string content = 1;
-}
-
-// 发送消息响应
-message SendMessageReply {
-  ChatMessage message = 1;
-}
-
-// 生成虚拟形象请求
-message GenerateAvatarRequest {
-  string image_url = 1;
-  string pet_name = 2;
-  string pet_species = 3;
-}
-
-// 生成虚拟形象响应
-message GenerateAvatarReply {
-  Avatar avatar = 1;
-  int32 remaining_attempts = 2;
+// 聊天
+message ChatRequest { string content = 1; } // 用户输入的文本内容
+message ChatReply {
+  int64 message_id = 1;   // 本次用户消息的ID
+  string content = 2;     // 本次用户消息内容回显
+  string created_at = 3;  // 发送时间 YYYY-MM-DD HH:MM:SS
+  int64 ai_message_id = 4;// （可选）AI 回复的消息ID
+  string ai_content = 5;  // （可选）AI 回复的文本
+  string ai_created_at = 6;// （可选）AI 回复时间
 } 

@@ -20,10 +20,44 @@ import (
 // wireApp init kratos application.
 func wireApp(*conf.Bootstrap, log.Logger) (*kratos.App, func(), error) {
 	panic(wire.Build(
-		server.ProviderSet,
-		data.ProviderSet,
-		biz.ProviderSet,
-		service.ProviderSet,
+		// infrastructure layer
+		data.NewData,
+		data.NewMysql,
+		data.NewRedis,
+
+		// data layer
+		data.NewUserRepo,
+		data.NewPetModelRepo,
+		data.NewItemRepo,
+		data.NewChatMessageRepo,
+		data.NewCategoryRepo,
+		data.NewPostRepo,
+		data.NewCommentRepo,
+		data.NewUserRelationRepo,
+		data.NewUserInteractionRepo,
+		data.NewNoteRepo,
+		data.NewUserUnlockRecordRepo,
+
+		// biz layer
+		biz.NewAuthUsecase,
+		biz.NewAvatarUsecase,
+		biz.NewCommunityUsecase,
+		biz.NewUserUsecase,
+		biz.NewMessageUsecase,
+
+		// service layer
+		service.NewAuthService,
+		service.NewAvatarService,
+		service.NewCommunityService,
+		service.NewUserService,
+		service.NewMessageService,
+		service.NewUploadService,
+
+		// server layer
+		server.NewHTTPServer,
+		server.NewGRPCServer,
+
+		// app layer
 		newApp,
 	))
 }

@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package api.auth.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "pet-angel/api/auth/v1;v1";
+
+// 认证服务（JWT）
+// - 登录成功签发 JWT，前端需在后续所有请求 Header 中携带：
+//   Authorization: Bearer <token>
+// - 所有时间字段统一为字符串格式：YYYY-MM-DD HH:MM:SS
+service AuthService {
+  // 登录（用户名 + 密码）
+  // 返回 user_id 与 JWT token；expires_in 为 token 的有效期（秒）
+  rpc Login(LoginRequest) returns (LoginReply) {
+    option (google.api.http) = {
+      post: "/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  // 重新登录/校验当前登录态
+  // 说明：服务端从请求头读取 JWT 校验有效性，入参为空。
+  rpc Relogin(ReloginRequest) returns (ReloginReply) {
+    option (google.api.http) = {
+      post: "/v1/auth/relogin"
+      body: "*"
+    };
+  }
+
+  // 获取当前登录用户信息（从 JWT 中获取 user_id）
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoReply) {
+    option (google.api.http) = {
+      get: "/v1/auth/user-info"
+    };
+  }
+
+  // 更新当前登录用户信息（仅POST）
+  rpc UpdateUserInfo(UpdateUserInfoRequest) returns (UpdateUserInfoReply) {
+    option (google.api.http) = {
+      post: "/v1/auth/user-info"
+      body: "*"
+    };
+  }
+}
+
+// 登录请求
+message LoginRequest {
+  // 用户名（或手机号/邮箱），由前端提供
+  string username = 1;
+  // 密码（明文或加密传输，建议 HTTPS）
+  string password = 2;
+}
+
+// 登录响应
+message LoginReply {
+  // 用户ID
+  int64 user_id = 1;
+  // JWT 令牌（放入后续请求 Header 的 Authorization: Bearer <token>）
+  string token = 2;
+  // 令牌有效期（单位：秒）
+  int32 expires_in = 3;
+}
+
+// 重新登录请求（空）
+message ReloginRequest {}
+
+// 重新登录响应
+message ReloginReply {
+  // true 表示已过期，需要重新登录；false 表示仍然有效
+  bool expire = 1;
+}
+
+// 获取用户信息请求（空）
+message GetUserInfoRequest {}
+
+// 获取用户信息响应
+message GetUserInfoReply {
+  int64 user_id = 1;                 // 用户ID
+  string nickname = 2;               // 昵称
+  string avatar = 3;                 // 头像URL
+  int64 model_id = 4;                // 当前宠物模型ID
+  string pet_name = 5;               // 宠物名称
+  string pet_avatar = 6;             // 宠物头像URL
+  int32 pet_sex = 7;                 // 宠物性别 0未知/1男/2女
+  string kind = 8;                   // 宠物品类
+  int32 weight = 9;                  // 体重（kg）
+  string hobby = 10;                 // 爱好
+  string description = 11;           // 个人/宠物简介
+  int32 coins = 12;                  // 金币余额
+  string created_at = 13;            // 创建时间 YYYY-MM-DD HH:MM:SS
+}
+
+// 更新用户信息请求（仅包含需要更新的字段）
+message UpdateUserInfoRequest {
+  string nickname = 1;               // 昵称
+  string avatar = 2;                 // 头像URL
+  int64 model_id = 3;                // 当前宠物模型ID
+  string pet_name = 4;               // 宠物名称
+  string pet_avatar = 5;             // 宠物头像URL
+  int32 pet_sex = 6;                 // 宠物性别 0未知/1男/2女
+  string kind = 7;                   // 宠物品类
+  int32 weight = 8;                  // 体重（kg）
+  string hobby = 9;                  // 爱好
+  string description = 10;           // 个人/宠物简介
+}
+
+// 更新用户信息响应
+message UpdateUserInfoReply { bool success = 1; }

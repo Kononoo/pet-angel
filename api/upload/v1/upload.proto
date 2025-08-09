@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package api.upload.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "pet-angel/api/upload/v1;v1";
+
+// 上传服务
+// 推荐直传 MinIO：服务端签发预签信息，前端直传；或使用后端中转完成登记
+service UploadService {
+  // 获取直传预签名（推荐）
+  rpc GetPresign(GetPresignRequest) returns (GetPresignReply) {
+    option (google.api.http) = { get: "/v1/upload/presign" };
+  }
+  // 上传完成登记（后端中转模式或直传完成后回调登记）
+  rpc UploadDone(UploadDoneRequest) returns (UploadDoneReply) {
+    option (google.api.http) = { post: "/v1/upload/done" body: "*" };
+  }
+}
+
+// 预签名请求
+message GetPresignRequest {
+  string file_name = 1;     // 原始文件名（含扩展名）
+  string content_type = 2;  // MIME 类型（如 image/png）
+}
+// 预签名响应
+message GetPresignReply {
+  string url = 1;                 // 直传地址（PUT/POST）
+  string method = 2;              // PUT/POST
+  map<string,string> headers = 3; // 直传需要携带的HTTP头
+  string final_url = 4;           // 上传完成后的可访问URL
+}
+
+// 上传完成登记请求
+message UploadDoneRequest { string url = 1; } // 已上传对象的访问URL
+// 上传完成登记响应
+message UploadDoneReply { string url = 1; }   // 确认后的访问URL（可与入参相同）

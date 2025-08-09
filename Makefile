@@ -16,12 +16,11 @@ else
 endif
 
 .PHONY: init
-# init: 一次性安装/更新本项目代码生成所需的工具链，包括：
-# - protoc 的 Go 插件（protoc-gen-go、protoc-gen-go-grpc）
-# - Kratos CLI 与 HTTP 协议生成器（protoc-gen-go-http）
-# - OpenAPI 生成器（protoc-gen-openapi）
-# - 依赖注入生成器（wire）
-# 适用于新环境初始化或工具升级；执行后确保 $(GOPATH)/bin 已加入 PATH。
+# init: 安装/更新代码生成工具链
+# - protoc 插件: protoc-gen-go、protoc-gen-go-grpc
+# - Kratos CLI 与 HTTP 协议生成器
+# - OpenAPI 生成器
+# - Wire 依赖注入生成器
 init:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
@@ -30,57 +29,87 @@ init:
 	go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
 	go install github.com/google/wire/cmd/wire@latest
 
-.PHONY: config
-# config: 编译 `internal/` 目录下的 proto（如 `internal/conf/conf.proto`），
-# 生成对应的 Go 类型（*.pb.go）到 `internal`，通常用于应用配置对象的更新。
-# 当你调整配置的 proto 结构后，运行本目标以同步生成代码，并相应更新 `configs/config.yaml`。
-config:
-	protoc --proto_path=./internal \
-	       --proto_path=./third_party \
-  	       --go_out=paths=source_relative:./internal \
-	       $(INTERNAL_PROTO_FILES)
-
 .PHONY: api
-# api: 编译 `api/` 目录下的服务与消息定义 proto，生成：
-# - *.pb.go（消息/枚举）
-# - *_grpc.pb.go（gRPC 接口/客户端桩）
-# - *_http.pb.go（Kratos HTTP 路由映射）
-# 同时导出 OpenAPI 规范（openapi.yaml）便于接口文档对接。
-# 修改对外 API（rpc/消息）后，先运行本目标，再在 `internal/service` 等处实现新增方法。
+# api: 生成 API 代码（pb.go / *_grpc.pb.go / *_http.pb.go）
 api:
 	protoc --proto_path=./api \
 	       --proto_path=./third_party \
-  	       --go_out=paths=source_relative:./api \
-  	       --go-http_out=paths=source_relative:./api \
-  	       --go-grpc_out=paths=source_relative:./api \
-	       --openapi_out=fq_schema_naming=true,default_response=false:. \
+	       --go_out=paths=source_relative:./api \
+	       --go-grpc_out=paths=source_relative:./api \
+	       --go-http_out=paths=source_relative:./api \
 	       $(API_PROTO_FILES)
 
-.PHONY: build
-# build: 构建当前项目到 `bin/` 目录，使用 `-ldflags` 将 Git 版本信息注入 `main.Version`。
-# 用于本地产出可执行文件或在 CI 中打包工件。
-build:
-	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
+.PHONY: openapi
+# openapi: 导出 OpenAPI 文档至 openapi.yaml 方便前端联调与文档浏览
+openapi:
+	protoc --proto_path=./api \
+	       --proto_path=./third_party \
+	       --openapi_out=fq_schema_naming=true,default_response=false:. \
+	       $(API_PROTO_FILES)
+	@echo "OpenAPI generated: ./openapi.yaml"
+
+.PHONY: service
+# service: 基于 proto 生成服务层骨架（仅生成缺失文件，不覆盖已实现代码）
+# 示例：kratos proto server api/community/v1/community.proto -t internal/service
+service:
+	kratos proto server api/auth/v1/auth.proto -t internal/service || true
+	kratos proto server api/avatar/v1/avatar.proto -t internal/service || true
+	kratos proto server api/community/v1/community.proto -t internal/service || true
+	kratos proto server api/user/v1/user.proto -t internal/service || true
+	kratos proto server api/message/v1/message.proto -t internal/service || true
+	kratos proto server api/upload/v1/upload.proto -t internal/service || true
+
+.PHONY: config
+# config: internal 下的 proto（例如 conf）生成到 internal 目录
+config:
+	protoc --proto_path=./internal \
+	       --proto_path=./third_party \
+   	   --go_out=paths=source_relative:./internal \
+	       $(INTERNAL_PROTO_FILES)
+
+.PHONY: wire
+# wire: 生成依赖注入代码（cmd/pet-angel/wire_gen.go）
+wire:
+	cd cmd/pet-angel && wire
 
 .PHONY: generate
-# generate: 统一执行代码生成与依赖整理：
-# - `go generate ./...` 扫描并执行源码中的 //go:generate 指令（如果存在）
-# - `go mod tidy` 整理 go.mod / go.sum
-# 通常在 `make api`/`make config` 之后执行，确保依赖图干净。
+# generate: 统一执行 generate 与依赖整理
 generate:
 	go generate ./...
 	go mod tidy
 
-.PHONY: all
-# all: 一键执行常用的生成链路（api → config → generate），
-# 适合在修改 proto 后快速同步所有生成产物与依赖。
-all:
-	make api;
-	make config;
-	make generate;
+.PHONY: run
+# run: 以本地配置启动服务
+run:
+	go run cmd/pet-angel/main.go cmd/pet-angel/wire_gen.go -conf ./configs
 
-# help: 显示可用的 make 目标与其简要说明（从各目标上方的注释中提取并渲染），
-# 便于探索和记忆命令。默认目标即为 help，不带任何参数直接 `make` 即可查看。
+.PHONY: build
+# build: 构建可执行文件到 bin/
+build:
+	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/pet-angel ./cmd/pet-angel
+
+.PHONY: test
+# test: 运行项目全部测试
+test:
+	go test -v ./...
+
+.PHONY: clean
+# clean: 清理生成产物
+clean:
+	rm -rf bin/
+	rm -f cmd/pet-angel/wire_gen.go
+
+.PHONY: all
+# all: 常用完整链路（生成 API/服务骨架/OpenAPI，wire 注入，并整理依赖）
+all:
+	make api
+	make service
+	make openapi
+	make wire
+	make generate
+
+.PHONY: help
+# help: 显示可用的 make 目标与其简要说明
 help:
 	@echo ''
 	@echo 'Usage:'
@@ -97,5 +126,4 @@ help:
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
-# 默认目标：当不指定任何 target 时，展示 help 列表与简述。
 .DEFAULT_GOAL := help

@@ -3,8 +3,7 @@
 
 openapi: 3.0.3
 info:
-    title: Greeter API
-    description: The greeting service definition.
+    title: ""
     version: 0.0.1
 paths:
     /helloworld/{name}:
@@ -26,8 +25,1120 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/helloworld.v1.HelloReply'
+    /v1/auth/login:
+        post:
+            tags:
+                - AuthService
+            description: |-
+                登录（用户名 + 密码）
+                 返回 user_id 与 JWT token；expires_in 为 token 的有效期（秒）
+            operationId: AuthService_Login
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.auth.v1.LoginRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.auth.v1.LoginReply'
+    /v1/auth/relogin:
+        post:
+            tags:
+                - AuthService
+            description: |-
+                重新登录/校验当前登录态
+                 说明：服务端从请求头读取 JWT 校验有效性，入参为空。
+            operationId: AuthService_Relogin
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.auth.v1.ReloginRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.auth.v1.ReloginReply'
+    /v1/auth/user-info:
+        get:
+            tags:
+                - AuthService
+            description: 获取当前登录用户信息（从 JWT 中获取 user_id）
+            operationId: AuthService_GetUserInfo
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.auth.v1.GetUserInfoReply'
+        post:
+            tags:
+                - AuthService
+            description: 更新当前登录用户信息（仅POST）
+            operationId: AuthService_UpdateUserInfo
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.auth.v1.UpdateUserInfoRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.auth.v1.UpdateUserInfoReply'
+    /v1/avatar/chat:
+        post:
+            tags:
+                - AvatarService
+            description: 发送一条聊天消息给 AI（同步返回本条消息；可选返回AI的即时回复）
+            operationId: AvatarService_Chat
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.avatar.v1.ChatRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.avatar.v1.ChatReply'
+    /v1/avatar/items:
+        get:
+            tags:
+                - AvatarService
+            description: 获取道具列表
+            operationId: AvatarService_GetItems
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.avatar.v1.GetItemsReply'
+    /v1/avatar/model:
+        post:
+            tags:
+                - AvatarService
+            description: 设置当前宠物模型
+            operationId: AvatarService_SetPetModel
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.avatar.v1.SetPetModelRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.avatar.v1.SetPetModelReply'
+    /v1/avatar/models:
+        get:
+            tags:
+                - AvatarService
+            description: 获取可用的宠物模型列表
+            operationId: AvatarService_GetModels
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.avatar.v1.GetModelsReply'
+    /v1/avatar/use-item:
+        post:
+            tags:
+                - AvatarService
+            description: 使用一个道具（例如喂食/玩具等）
+            operationId: AvatarService_UseItem
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.avatar.v1.UseItemRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.avatar.v1.UseItemReply'
+    /v1/community/categories:
+        get:
+            tags:
+                - CommunityService
+            description: 获取帖子分类列表
+            operationId: CommunityService_GetCategories
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.GetCategoriesReply'
+    /v1/community/comments/{commentId}/like:
+        post:
+            tags:
+                - CommunityService
+            description: 点赞评论
+            operationId: CommunityService_LikeComment
+            parameters:
+                - name: commentId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.LikeCommentReply'
+    /v1/community/comments/{commentId}/unlike:
+        post:
+            tags:
+                - CommunityService
+            description: 取消点赞评论（POST /unlike）
+            operationId: CommunityService_UnlikeComment
+            parameters:
+                - name: commentId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.UnlikeCommentReply'
+    /v1/community/posts:
+        get:
+            tags:
+                - CommunityService
+            description: 获取帖子列表（支持分类、类型、排序筛选）
+            operationId: CommunityService_GetPostList
+            parameters:
+                - name: categoryId
+                  in: query
+                  schema:
+                    type: string
+                - name: postType
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: sort
+                  in: query
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.GetPostListReply'
+        post:
+            tags:
+                - CommunityService
+            description: 发布帖子（图文或视频）
+            operationId: CommunityService_CreatePost
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.community.v1.CreatePostRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.CreatePostReply'
+    /v1/community/posts/{postId}:
+        get:
+            tags:
+                - CommunityService
+            description: 获取帖子详情
+            operationId: CommunityService_GetPostDetail
+            parameters:
+                - name: postId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.GetPostDetailReply'
+    /v1/community/posts/{postId}/comments:
+        get:
+            tags:
+                - CommunityService
+            description: 获取评论列表
+            operationId: CommunityService_GetCommentList
+            parameters:
+                - name: postId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.GetCommentListReply'
+        post:
+            tags:
+                - CommunityService
+            description: 发表评论
+            operationId: CommunityService_CreateComment
+            parameters:
+                - name: postId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.community.v1.CreateCommentRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.CreateCommentReply'
+    /v1/community/posts/{postId}/like:
+        post:
+            tags:
+                - CommunityService
+            description: 点赞帖子
+            operationId: CommunityService_LikePost
+            parameters:
+                - name: postId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.LikePostReply'
+    /v1/community/posts/{postId}/unlike:
+        post:
+            tags:
+                - CommunityService
+            description: 取消点赞帖子（POST /unlike）
+            operationId: CommunityService_UnlikePost
+            parameters:
+                - name: postId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.community.v1.UnlikePostReply'
+    /v1/message/list:
+        get:
+            tags:
+                - MessageService
+            description: 获取消息列表（包含聊天与小纸条）
+            operationId: MessageService_GetMessageList
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: onlyNotes
+                  in: query
+                  schema:
+                    type: boolean
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.message.v1.GetMessageListReply'
+    /v1/message/{messageId}/unlock:
+        post:
+            tags:
+                - MessageService
+            description: 解锁一条小纸条（message_type=1）
+            operationId: MessageService_UnlockMessage
+            parameters:
+                - name: messageId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.message.v1.UnlockMessageReply'
+    /v1/upload/done:
+        post:
+            tags:
+                - UploadService
+            description: 上传完成登记（后端中转模式或直传完成后回调登记）
+            operationId: UploadService_UploadDone
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.upload.v1.UploadDoneRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.upload.v1.UploadDoneReply'
+    /v1/upload/presign:
+        get:
+            tags:
+                - UploadService
+            description: 获取直传预签名（推荐）
+            operationId: UploadService_GetPresign
+            parameters:
+                - name: fileName
+                  in: query
+                  schema:
+                    type: string
+                - name: contentType
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.upload.v1.GetPresignReply'
+    /v1/user/follow:
+        post:
+            tags:
+                - UserService
+            description: 关注用户
+            operationId: UserService_FollowUser
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.user.v1.FollowUserRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.user.v1.FollowUserReply'
+    /v1/user/unfollow:
+        post:
+            tags:
+                - UserService
+            description: 取消关注
+            operationId: UserService_UnfollowUser
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.user.v1.UnfollowUserRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.user.v1.UnfollowUserReply'
+    /v1/user/{userId}/follows:
+        get:
+            tags:
+                - UserService
+            description: 关注列表（用户关注的人）
+            operationId: UserService_GetFollowList
+            parameters:
+                - name: userId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.user.v1.GetFollowListReply'
+    /v1/user/{userId}/likes:
+        get:
+            tags:
+                - UserService
+            description: 点赞列表（用户点赞过的帖子）
+            operationId: UserService_GetLikeList
+            parameters:
+                - name: userId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.user.v1.GetLikeListReply'
+    /v1/user/{userId}/profile:
+        get:
+            tags:
+                - UserService
+            description: 用户主页信息
+            operationId: UserService_GetUserProfile
+            parameters:
+                - name: userId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.user.v1.GetUserProfileReply'
 components:
     schemas:
+        api.auth.v1.GetUserInfoReply:
+            type: object
+            properties:
+                userId:
+                    type: string
+                nickname:
+                    type: string
+                avatar:
+                    type: string
+                modelId:
+                    type: string
+                petName:
+                    type: string
+                petAvatar:
+                    type: string
+                petSex:
+                    type: integer
+                    format: int32
+                kind:
+                    type: string
+                weight:
+                    type: integer
+                    format: int32
+                hobby:
+                    type: string
+                description:
+                    type: string
+                coins:
+                    type: integer
+                    format: int32
+                createdAt:
+                    type: string
+            description: 获取用户信息响应
+        api.auth.v1.LoginReply:
+            type: object
+            properties:
+                userId:
+                    type: string
+                    description: 用户ID
+                token:
+                    type: string
+                    description: 'JWT 令牌（放入后续请求 Header 的 Authorization: Bearer <token>）'
+                expiresIn:
+                    type: integer
+                    description: 令牌有效期（单位：秒）
+                    format: int32
+            description: 登录响应
+        api.auth.v1.LoginRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                    description: 用户名（或手机号/邮箱），由前端提供
+                password:
+                    type: string
+                    description: 密码（明文或加密传输，建议 HTTPS）
+            description: 登录请求
+        api.auth.v1.ReloginReply:
+            type: object
+            properties:
+                expire:
+                    type: boolean
+                    description: true 表示已过期，需要重新登录；false 表示仍然有效
+            description: 重新登录响应
+        api.auth.v1.ReloginRequest:
+            type: object
+            properties: {}
+            description: 重新登录请求（空）
+        api.auth.v1.UpdateUserInfoReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+            description: 更新用户信息响应
+        api.auth.v1.UpdateUserInfoRequest:
+            type: object
+            properties:
+                nickname:
+                    type: string
+                avatar:
+                    type: string
+                modelId:
+                    type: string
+                petName:
+                    type: string
+                petAvatar:
+                    type: string
+                petSex:
+                    type: integer
+                    format: int32
+                kind:
+                    type: string
+                weight:
+                    type: integer
+                    format: int32
+                hobby:
+                    type: string
+                description:
+                    type: string
+            description: 更新用户信息请求（仅包含需要更新的字段）
+        api.avatar.v1.ChatReply:
+            type: object
+            properties:
+                messageId:
+                    type: string
+                content:
+                    type: string
+                createdAt:
+                    type: string
+                aiMessageId:
+                    type: string
+                aiContent:
+                    type: string
+                aiCreatedAt:
+                    type: string
+        api.avatar.v1.ChatRequest:
+            type: object
+            properties:
+                content:
+                    type: string
+            description: 聊天
+        api.avatar.v1.GetItemsReply:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.avatar.v1.Item'
+        api.avatar.v1.GetModelsReply:
+            type: object
+            properties:
+                models:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.avatar.v1.PetModel'
+        api.avatar.v1.Item:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                description:
+                    type: string
+                iconPath:
+                    type: string
+                coinCost:
+                    type: integer
+                    format: int32
+            description: 道具
+        api.avatar.v1.PetModel:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                path:
+                    type: string
+                modelType:
+                    type: integer
+                    format: int32
+                isDefault:
+                    type: boolean
+                sortOrder:
+                    type: integer
+                    format: int32
+            description: 宠物模型
+        api.avatar.v1.SetPetModelReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.avatar.v1.SetPetModelRequest:
+            type: object
+            properties:
+                modelId:
+                    type: string
+            description: 设置当前模型
+        api.avatar.v1.UseItemReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                message:
+                    type: string
+        api.avatar.v1.UseItemRequest:
+            type: object
+            properties:
+                itemId:
+                    type: string
+            description: 使用道具
+        api.community.v1.Category:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+            description: 帖子分类
+        api.community.v1.Comment:
+            type: object
+            properties:
+                id:
+                    type: string
+                user:
+                    $ref: '#/components/schemas/api.community.v1.UserBrief'
+                content:
+                    type: string
+                likedCount:
+                    type: integer
+                    format: int32
+                createdAt:
+                    type: string
+                isLiked:
+                    type: boolean
+            description: 评论
+        api.community.v1.CreateCommentReply:
+            type: object
+            properties:
+                id:
+                    type: string
+        api.community.v1.CreateCommentRequest:
+            type: object
+            properties:
+                postId:
+                    type: string
+                content:
+                    type: string
+        api.community.v1.CreatePostReply:
+            type: object
+            properties:
+                id:
+                    type: string
+        api.community.v1.CreatePostRequest:
+            type: object
+            properties:
+                categoryId:
+                    type: string
+                title:
+                    type: string
+                content:
+                    type: string
+                postType:
+                    type: integer
+                    format: int32
+                imageUrls:
+                    type: array
+                    items:
+                        type: string
+                videoUrl:
+                    type: string
+                coverUrl:
+                    type: string
+                locate:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                isPrivate:
+                    type: boolean
+            description: 发帖
+        api.community.v1.GetCategoriesReply:
+            type: object
+            properties:
+                categories:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.community.v1.Category'
+        api.community.v1.GetCommentListReply:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    format: int32
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.community.v1.Comment'
+        api.community.v1.GetPostDetailReply:
+            type: object
+            properties:
+                post:
+                    $ref: '#/components/schemas/api.community.v1.Post'
+        api.community.v1.GetPostListReply:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    format: int32
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.community.v1.Post'
+        api.community.v1.LikeCommentReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.community.v1.LikePostReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.community.v1.Post:
+            type: object
+            properties:
+                id:
+                    type: string
+                user:
+                    $ref: '#/components/schemas/api.community.v1.UserBrief'
+                categoryId:
+                    type: string
+                title:
+                    type: string
+                content:
+                    type: string
+                postType:
+                    type: integer
+                    format: int32
+                imageUrls:
+                    type: array
+                    items:
+                        type: string
+                videoUrl:
+                    type: string
+                coverUrl:
+                    type: string
+                locate:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                likedCount:
+                    type: integer
+                    format: int32
+                commentCount:
+                    type: integer
+                    format: int32
+                createdAt:
+                    type: string
+                isLiked:
+                    type: boolean
+                isPrivate:
+                    type: boolean
+            description: 帖子实体
+        api.community.v1.UnlikeCommentReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.community.v1.UnlikePostReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.community.v1.UserBrief:
+            type: object
+            properties:
+                id:
+                    type: string
+                nickname:
+                    type: string
+                avatar:
+                    type: string
+                isFollowed:
+                    type: boolean
+            description: 用户简要信息（用于帖子/评论作者）
+        api.message.v1.GetMessageListReply:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    format: int32
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.message.v1.Message'
+            description: 消息列表响应
+        api.message.v1.Message:
+            type: object
+            properties:
+                id:
+                    type: string
+                sender:
+                    type: integer
+                    format: int32
+                messageType:
+                    type: integer
+                    format: int32
+                isLocked:
+                    type: boolean
+                unlockCoins:
+                    type: integer
+                    format: int32
+                content:
+                    type: string
+                createdAt:
+                    type: string
+            description: 消息体
+        api.message.v1.UnlockMessageReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                remainingCoins:
+                    type: integer
+                    format: int32
+                message:
+                    $ref: '#/components/schemas/api.message.v1.Message'
+            description: 解锁小纸条响应
+        api.upload.v1.GetPresignReply:
+            type: object
+            properties:
+                url:
+                    type: string
+                method:
+                    type: string
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
+                finalUrl:
+                    type: string
+            description: 预签名响应
+        api.upload.v1.UploadDoneReply:
+            type: object
+            properties:
+                url:
+                    type: string
+            description: 上传完成登记响应
+        api.upload.v1.UploadDoneRequest:
+            type: object
+            properties:
+                url:
+                    type: string
+            description: 上传完成登记请求
+        api.user.v1.FollowUserReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.user.v1.FollowUserRequest:
+            type: object
+            properties:
+                targetUserId:
+                    type: string
+            description: 关注请求
+        api.user.v1.GetFollowListReply:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    format: int32
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.user.v1.UserBrief'
+        api.user.v1.GetLikeListReply:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    format: int32
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.user.v1.PostBrief'
+        api.user.v1.GetUserProfileReply:
+            type: object
+            properties:
+                avatar:
+                    type: string
+                nickname:
+                    type: string
+                petName:
+                    type: string
+                petSex:
+                    type: integer
+                    format: int32
+                kind:
+                    type: string
+                weight:
+                    type: integer
+                    format: int32
+                hobby:
+                    type: string
+                description:
+                    type: string
+                posts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.user.v1.PostBrief'
+                isFollowed:
+                    type: boolean
+            description: 用户主页响应
+        api.user.v1.PostBrief:
+            type: object
+            properties:
+                id:
+                    type: string
+                title:
+                    type: string
+                postType:
+                    type: integer
+                    format: int32
+                coverUrl:
+                    type: string
+                likedCount:
+                    type: integer
+                    format: int32
+                createdAt:
+                    type: string
+            description: 帖子简要信息（用于主页/点赞列表）
+        api.user.v1.UnfollowUserReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.user.v1.UnfollowUserRequest:
+            type: object
+            properties:
+                targetUserId:
+                    type: string
+            description: 取消关注请求
+        api.user.v1.UserBrief:
+            type: object
+            properties:
+                id:
+                    type: string
+                nickname:
+                    type: string
+                avatar:
+                    type: string
+            description: 用户简要
         helloworld.v1.HelloReply:
             type: object
             properties:
@@ -39,4 +1150,38 @@ components:
                     type: string
             description: The response message containing the greetings
 tags:
+    - name: AuthService
+      description: |-
+        认证服务（JWT）
+         - 登录成功签发 JWT，前端需在后续所有请求 Header 中携带：
+           Authorization: Bearer <token>
+         - 所有时间字段统一为字符串格式：YYYY-MM-DD HH:MM:SS
+    - name: AvatarService
+      description: |-
+        虚拟形象/道具/聊天 服务
+         - 模型：列出可用宠物模型并可切换
+         - 道具：列出与使用（消费金币或数量的策略在服务端控制）
+         - 聊天：向 AI 发送一条消息，可选返回 AI 的同步应答
+    - name: CommunityService
+      description: |-
+        社区服务
+         - 分类：列出帖子分类
+         - 帖子：列表/详情/发帖/点赞
+         - 评论：列表/发表/点赞
     - name: Greeter
+      description: The greeting service definition.
+    - name: MessageService
+      description: |-
+        消息/小纸条服务
+         - 列表：按时间倒序分页
+         - 小纸条解锁：扣金币并返回完整内容
+    - name: UploadService
+      description: |-
+        上传服务
+         推荐直传 MinIO：服务端签发预签信息，前端直传；或使用后端中转完成登记
+    - name: UserService
+      description: |-
+        用户关系与主页服务
+         - 关注/取关：当前登录用户对目标用户的关系
+         - 主页：展示用户基础资料与最近的帖子
+         - 列表：关注列表、点赞过的帖子列表

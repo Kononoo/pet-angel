@@ -3,302 +3,133 @@ syntax = "proto3";
 package api.community.v1;
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "pet-angel/api/community/v1;v1";
 
 // 社区服务
+// - 分类：列出帖子分类
+// - 帖子：列表/详情/发帖/点赞
+// - 评论：列表/发表/点赞
 service CommunityService {
-  // 获取帖子列表
-  rpc GetPostList(GetPostListRequest) returns (GetPostListReply) {
-    option (google.api.http) = {
-      get: "/v1/community/posts"
-    };
+  // 获取帖子分类列表
+  rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesReply) {
+    option (google.api.http) = { get: "/v1/community/categories" };
   }
-
+  // 获取帖子列表（支持分类、类型、排序筛选）
+  rpc GetPostList(GetPostListRequest) returns (GetPostListReply) {
+    option (google.api.http) = { get: "/v1/community/posts" };
+  }
   // 获取帖子详情
   rpc GetPostDetail(GetPostDetailRequest) returns (GetPostDetailReply) {
-    option (google.api.http) = {
-      get: "/v1/community/posts/{post_id}"
-    };
+    option (google.api.http) = { get: "/v1/community/posts/{post_id}" };
   }
-
-  // 创建帖子
+  // 发布帖子（图文或视频）
   rpc CreatePost(CreatePostRequest) returns (CreatePostReply) {
-    option (google.api.http) = {
-      post: "/v1/community/posts"
-      body: "*"
-    };
+    option (google.api.http) = { post: "/v1/community/posts" body: "*" };
   }
-
-  // 更新帖子
-  rpc UpdatePost(UpdatePostRequest) returns (UpdatePostReply) {
-    option (google.api.http) = {
-      put: "/v1/community/posts/{post_id}"
-      body: "*"
-    };
-  }
-
-  // 删除帖子
-  rpc DeletePost(DeletePostRequest) returns (DeletePostReply) {
-    option (google.api.http) = {
-      delete: "/v1/community/posts/{post_id}"
-    };
-  }
-
   // 点赞帖子
   rpc LikePost(LikePostRequest) returns (LikePostReply) {
-    option (google.api.http) = {
-      post: "/v1/community/posts/{post_id}/like"
-    };
+    option (google.api.http) = { post: "/v1/community/posts/{post_id}/like" };
   }
-
-  // 取消点赞
+  // 取消点赞帖子（POST /unlike）
   rpc UnlikePost(UnlikePostRequest) returns (UnlikePostReply) {
-    option (google.api.http) = {
-      delete: "/v1/community/posts/{post_id}/like"
-    };
+    option (google.api.http) = { post: "/v1/community/posts/{post_id}/unlike" };
   }
-
   // 获取评论列表
   rpc GetCommentList(GetCommentListRequest) returns (GetCommentListReply) {
-    option (google.api.http) = {
-      get: "/v1/community/posts/{post_id}/comments"
-    };
+    option (google.api.http) = { get: "/v1/community/posts/{post_id}/comments" };
   }
-
-  // 创建评论
+  // 发表评论
   rpc CreateComment(CreateCommentRequest) returns (CreateCommentReply) {
-    option (google.api.http) = {
-      post: "/v1/community/posts/{post_id}/comments"
-      body: "*"
-    };
+    option (google.api.http) = { post: "/v1/community/posts/{post_id}/comments" body: "*" };
   }
-
-  // 删除评论
-  rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentReply) {
-    option (google.api.http) = {
-      delete: "/v1/community/comments/{comment_id}"
-    };
+  // 点赞评论
+  rpc LikeComment(LikeCommentRequest) returns (LikeCommentReply) {
+    option (google.api.http) = { post: "/v1/community/comments/{comment_id}/like" };
   }
-
-  // 获取标签列表
-  rpc GetTagList(GetTagListRequest) returns (GetTagListReply) {
-    option (google.api.http) = {
-      get: "/v1/community/tags"
-    };
-  }
-
-  // 获取我的帖子列表
-  rpc GetMyPosts(GetMyPostsRequest) returns (GetMyPostsReply) {
-    option (google.api.http) = {
-      get: "/v1/community/my-posts"
-    };
-  }
-
-  // 获取我点赞的帖子列表
-  rpc GetLikedPosts(GetLikedPostsRequest) returns (GetLikedPostsReply) {
-    option (google.api.http) = {
-      get: "/v1/community/liked-posts"
-    };
+  // 取消点赞评论（POST /unlike）
+  rpc UnlikeComment(UnlikeCommentRequest) returns (UnlikeCommentReply) {
+    option (google.api.http) = { post: "/v1/community/comments/{comment_id}/unlike" };
   }
 }
 
-// 帖子信息
+// 帖子分类
+message Category { int64 id = 1; string name = 2; }
+message GetCategoriesRequest {} // 无入参
+message GetCategoriesReply { repeated Category categories = 1; }
+
+// 用户简要信息（用于帖子/评论作者）
+message UserBrief { int64 id = 1; string nickname = 2; string avatar = 3; bool is_followed = 4; }
+
+// 帖子实体
 message Post {
-  int64 post_id = 1;
-  int64 user_id = 2;
-  string title = 3;
-  string content = 4;
-  repeated string images = 5;
-  repeated string videos = 6;
-  repeated int64 tag_ids = 7;
-  int32 like_count = 8;
-  int32 comment_count = 9;
-  int32 view_count = 10;
-  bool is_liked = 11;
-  string status = 12; // normal, draft, deleted
-  google.protobuf.Timestamp created_at = 13;
-  google.protobuf.Timestamp updated_at = 14;
-  User author = 15;
+  int64 id = 1;                     // 帖子ID
+  UserBrief user = 2;               // 作者信息
+  int64 category_id = 3;            // 分类ID
+  string title = 4;                 // 标题
+  string content = 5;               // 文本内容
+  int32 post_type = 6;              // 帖子类型 0图文 1视频
+  repeated string image_urls = 7;   // 图片URL列表（图文）
+  string video_url = 8;             // 视频URL（视频）
+  string cover_url = 9;             // 封面URL
+  string locate = 10;               // 位置文本
+  repeated string tags = 11;        // 标签
+  int32 liked_count = 12;           // 点赞数
+  int32 comment_count = 13;         // 评论数
+  string created_at = 14;           // 创建时间 YYYY-MM-DD HH:MM:SS
+  bool is_liked = 15;               // 当前用户是否已点赞
+  bool is_private = 16;             // 是否私密
 }
 
-// 用户信息（简化版）
-message User {
-  int64 user_id = 1;
-  string nickname = 2;
-  string avatar = 3;
-  bool is_followed = 4;
-}
-
-// 评论信息
-message Comment {
-  int64 comment_id = 1;
-  int64 post_id = 2;
-  int64 user_id = 3;
-  string content = 4;
-  int32 like_count = 5;
-  bool is_liked = 6;
-  google.protobuf.Timestamp created_at = 7;
-  User author = 8;
-}
-
-// 标签信息
-message Tag {
-  int64 tag_id = 1;
-  string name = 2;
-  string icon = 3;
-  int32 post_count = 4;
-  bool is_default = 5;
-}
-
-// 获取帖子列表请求
+// 帖子列表查询参数
 message GetPostListRequest {
-  repeated int64 tag_ids = 1;
-  string sort_by = 2; // time, hot
-  int32 page = 3;
-  int32 page_size = 4;
+  int64 category_id = 1;            // 分类过滤（可空）
+  int32 post_type = 2;              // -1全部 0图文 1视频（默认-1）
+  string sort = 3;                  // created|liked
+  int32 page = 4;                   // 页码，从1开始
+  int32 page_size = 5;              // 每页条数（默认20，最大100）
 }
+message GetPostListReply { int32 total = 1; repeated Post list = 2; }
 
-// 获取帖子列表响应
-message GetPostListReply {
-  repeated Post posts = 1;
-  int32 total = 2;
-}
+// 帖子详情
+message GetPostDetailRequest { int64 post_id = 1; }
+message GetPostDetailReply { Post post = 1; }
 
-// 获取帖子详情请求
-message GetPostDetailRequest {
-  int64 post_id = 1;
-}
-
-// 获取帖子详情响应
-message GetPostDetailReply {
-  Post post = 1;
-}
-
-// 创建帖子请求
+// 发帖
 message CreatePostRequest {
-  string title = 1;
-  string content = 2;
-  repeated string images = 3;
-  repeated string videos = 4;
-  repeated int64 tag_ids = 5;
-  bool is_draft = 6;
+  int64 category_id = 1;            // 分类ID（可空）
+  string title = 2;                 // 标题
+  string content = 3;               // 文本内容
+  int32 post_type = 4;              // 0图文 1视频
+  repeated string image_urls = 5;   // 图文：图片URL列表
+  string video_url = 6;             // 视频：视频URL
+  string cover_url = 7;             // 封面URL
+  string locate = 8;                // 位置
+  repeated string tags = 9;         // 标签
+  bool is_private = 10;             // 是否私密
 }
+message CreatePostReply { int64 id = 1; } // 新帖ID
 
-// 创建帖子响应
-message CreatePostReply {
-  Post post = 1;
+// 帖子点赞
+message LikePostRequest { int64 post_id = 1; }
+message LikePostReply { bool success = 1; }
+message UnlikePostRequest { int64 post_id = 1; }
+message UnlikePostReply { bool success = 1; }
+
+// 评论
+message Comment {
+  int64 id = 1;              // 评论ID
+  UserBrief user = 2;        // 评论者
+  string content = 3;        // 内容
+  int32 liked_count = 4;     // 点赞数
+  string created_at = 5;     // 创建时间
+  bool is_liked = 6;         // 当前用户是否点赞
 }
-
-// 更新帖子请求
-message UpdatePostRequest {
-  int64 post_id = 1;
-  string title = 2;
-  string content = 3;
-  repeated string images = 4;
-  repeated string videos = 5;
-  repeated int64 tag_ids = 6;
-}
-
-// 更新帖子响应
-message UpdatePostReply {
-  Post post = 1;
-}
-
-// 删除帖子请求
-message DeletePostRequest {
-  int64 post_id = 1;
-}
-
-// 删除帖子响应
-message DeletePostReply {
-  bool success = 1;
-}
-
-// 点赞帖子请求
-message LikePostRequest {
-  int64 post_id = 1;
-}
-
-// 点赞帖子响应
-message LikePostReply {
-  bool success = 1;
-}
-
-// 取消点赞请求
-message UnlikePostRequest {
-  int64 post_id = 1;
-}
-
-// 取消点赞响应
-message UnlikePostReply {
-  bool success = 1;
-}
-
-// 获取评论列表请求
-message GetCommentListRequest {
-  int64 post_id = 1;
-  int32 page = 2;
-  int32 page_size = 3;
-}
-
-// 获取评论列表响应
-message GetCommentListReply {
-  repeated Comment comments = 1;
-  int32 total = 2;
-}
-
-// 创建评论请求
-message CreateCommentRequest {
-  int64 post_id = 1;
-  string content = 2;
-}
-
-// 创建评论响应
-message CreateCommentReply {
-  Comment comment = 1;
-}
-
-// 删除评论请求
-message DeleteCommentRequest {
-  int64 comment_id = 1;
-}
-
-// 删除评论响应
-message DeleteCommentReply {
-  bool success = 1;
-}
-
-// 获取标签列表请求
-message GetTagListRequest {
-}
-
-// 获取标签列表响应
-message GetTagListReply {
-  repeated Tag tags = 1;
-}
-
-// 获取我的帖子列表请求
-message GetMyPostsRequest {
-  int32 page = 1;
-  int32 page_size = 2;
-}
-
-// 获取我的帖子列表响应
-message GetMyPostsReply {
-  repeated Post posts = 1;
-  int32 total = 2;
-}
-
-// 获取我点赞的帖子列表请求
-message GetLikedPostsRequest {
-  int32 page = 1;
-  int32 page_size = 2;
-}
-
-// 获取我点赞的帖子列表响应
-message GetLikedPostsReply {
-  repeated Post posts = 1;
-  int32 total = 2;
-} 
+message GetCommentListRequest { int64 post_id = 1; int32 page = 2; int32 page_size = 3; }
+message GetCommentListReply { int32 total = 1; repeated Comment list = 2; }
+message CreateCommentRequest { int64 post_id = 1; string content = 2; }
+message CreateCommentReply { int64 id = 1; }
+message LikeCommentRequest { int64 comment_id = 1; }
+message LikeCommentReply { bool success = 1; }
+message UnlikeCommentRequest { int64 comment_id = 1; }
+message UnlikeCommentReply { bool success = 1; } 

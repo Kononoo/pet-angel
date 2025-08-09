@@ -43,39 +43,51 @@ Pet Angel是一个创新的宠物社交应用，致力于为宠物主人提供�
 
 ### 核心功能模块
 
-#### 1. 用户系统 (User)
-- **功能**: 用户注册、登录、信息管理、关注系统
-- **API**: `/v1/user/*`
-- **核心表**: `users`, `pets`, `user_relations`
+#### 1. 认证模块 (Auth)
+- **功能**: 微信登录、重新登录、用户信息管理
+- **API**: `/v1/auth/*`
+- **核心表**: `users`
 
-#### 2. 社区模块 (Community)
-- **功能**: 帖子发布、浏览、评论、点赞、标签分类
-- **API**: `/v1/community/*`
-- **核心表**: `posts`, `comments`, `tags`, `user_interactions`
-
-#### 3. 虚拟形象模块 (Avatar)
-- **功能**: 虚拟形象管理、道具系统、聊天互动
+#### 2. 虚拟形象模块 (Avatar)
+- **功能**: 宠物模型管理、道具互动、聊天对话
 - **API**: `/v1/avatar/*`
-- **核心表**: `avatars`, `user_avatars`, `props`, `prop_categories`, `user_props`, `chat_messages`
+- **核心表**: `pet_models`, `user_pet_models`, `items`, `chat_messages`
 
-#### 4. 小纸条模块 (Message)
-- **功能**: AI生成小纸条、付费解锁、情感陪伴
+#### 3. 社区模块 (Community)
+- **功能**: 帖子发布、浏览、评论、点赞、分类管理
+- **API**: `/v1/community/*`
+- **核心表**: `posts`, `comments`, `categories`, `user_interactions`
+
+#### 4. 用户关系模块 (User)
+- **功能**: 关注系统、用户主页、点赞列表
+- **API**: `/v1/user/*`
+- **核心表**: `user_relations`, `user_interactions`
+
+#### 5. 小纸条模块 (Message)
+- **功能**: 小纸条列表、解锁功能、情感陪伴
 - **API**: `/v1/message/*`
-- **核心表**: `messages`, `user_unlock_records`
+- **核心表**: `notes`, `user_unlock_records`
+
+#### 6. 文件上传模块 (Upload)
+- **功能**: 图片/视频上传
+- **API**: `/v1/upload/*`
 
 ## 数据库设计
 
 ### 核心表结构
 
 - `users` - 用户表
-- `pets` - 宠物表
+- `pet_models` - 宠物模型表
+- `user_pet_models` - 用户当前模型表
+- `items` - 道具表
+- `chat_messages` - 聊天记录表
+- `categories` - 帖子分类表
 - `posts` - 帖子表
 - `comments` - 评论表
-- `avatars` - 虚拟形象表
-- `props` - 道具表
-- `messages` - 小纸条表
 - `user_relations` - 用户关系表
 - `user_interactions` - 用户互动表
+- `notes` - 小纸条表
+- `user_unlock_records` - 用户解锁记录表
 
 详细的数据库设计请参考 `internal/data/sql/1-init-tables.sql`
 
@@ -178,6 +190,9 @@ make api
 # 生成依赖注入代码
 make wire
 
+# 生成所有代码（API + Wire）
+make all
+
 # 运行项目
 make run
 
@@ -189,34 +204,47 @@ make test
 
 # 清理构建文件
 make clean
+
+# 初始化项目
+make init
 ```
 
 ## API文档
 
 项目使用gRPC + HTTP双协议，API文档详见各模块的proto文件：
 
-- [用户API](api/user/v1/user.proto)
-- [社区API](api/community/v1/community.proto)
+- [认证API](api/auth/v1/auth.proto)
 - [虚拟形象API](api/avatar/v1/avatar.proto)
+- [社区API](api/community/v1/community.proto)
+- [用户关系API](api/user/v1/user.proto)
 - [小纸条API](api/message/v1/message.proto)
+- [文件上传API](api/upload/v1/upload.proto)
 
 ### API示例
 
-#### 用户注册
+#### 微信登录
 ```bash
-curl -X POST "http://localhost:8000/v1/user/register" \
+curl -X POST "http://localhost:8000/v1/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "testuser",
-    "password": "password123",
-    "nickname": "测试用户",
-    "email": "test@example.com"
+    "id": "wx_user_id",
+    "code": "wx_auth_code"
   }'
 ```
 
 #### 获取帖子列表
 ```bash
-curl -X GET "http://localhost:8000/v1/community/posts?page=1&page_size=10"
+curl -X GET "http://localhost:8000/v1/community/posts?category=日常&page=1&page_size=10"
+```
+
+#### 使用道具
+```bash
+curl -X POST "http://localhost:8000/v1/avatar/use-item" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "123",
+    "item_id": "1"
+  }'
 ```
 
 ## 部署指南

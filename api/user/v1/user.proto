@@ -3,205 +3,78 @@ syntax = "proto3";
 package api.user.v1;
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "pet-angel/api/user/v1;v1";
 
-// 用户服务
+// 用户关系与主页服务
+// - 关注/取关：当前登录用户对目标用户的关系
+// - 主页：展示用户基础资料与最近的帖子
+// - 列表：关注列表、点赞过的帖子列表
 service UserService {
-  // 用户注册
-  rpc Register(RegisterRequest) returns (RegisterReply) {
-    option (google.api.http) = {
-      post: "/v1/user/register"
-      body: "*"
-    };
-  }
-
-  // 用户登录
-  rpc Login(LoginRequest) returns (LoginReply) {
-    option (google.api.http) = {
-      post: "/v1/user/login"
-      body: "*"
-    };
-  }
-
-  // 获取用户信息
-  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoReply) {
-    option (google.api.http) = {
-      get: "/v1/user/{user_id}"
-    };
-  }
-
-  // 更新用户信息
-  rpc UpdateUserInfo(UpdateUserInfoRequest) returns (UpdateUserInfoReply) {
-    option (google.api.http) = {
-      put: "/v1/user/{user_id}"
-      body: "*"
-    };
-  }
-
   // 关注用户
   rpc FollowUser(FollowUserRequest) returns (FollowUserReply) {
-    option (google.api.http) = {
-      post: "/v1/user/follow"
-      body: "*"
-    };
+    option (google.api.http) = { post: "/v1/user/follow" body: "*" };
   }
-
   // 取消关注
   rpc UnfollowUser(UnfollowUserRequest) returns (UnfollowUserReply) {
-    option (google.api.http) = {
-      delete: "/v1/user/follow"
-      body: "*"
-    };
+    option (google.api.http) = { post: "/v1/user/unfollow" body: "*" };
   }
-
-  // 获取关注列表
-  rpc GetFollowingList(GetFollowingListRequest) returns (GetFollowingListReply) {
-    option (google.api.http) = {
-      get: "/v1/user/{user_id}/following"
-    };
+  // 用户主页信息
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileReply) {
+    option (google.api.http) = { get: "/v1/user/{user_id}/profile" };
   }
-
-  // 获取粉丝列表
-  rpc GetFollowersList(GetFollowersListRequest) returns (GetFollowersListReply) {
-    option (google.api.http) = {
-      get: "/v1/user/{user_id}/followers"
-    };
+  // 关注列表（用户关注的人）
+  rpc GetFollowList(GetFollowListRequest) returns (GetFollowListReply) {
+    option (google.api.http) = { get: "/v1/user/{user_id}/follows" };
+  }
+  // 点赞列表（用户点赞过的帖子）
+  rpc GetLikeList(GetLikeListRequest) returns (GetLikeListReply) {
+    option (google.api.http) = { get: "/v1/user/{user_id}/likes" };
   }
 }
 
-// 用户信息
-message User {
-  int64 user_id = 1;
-  string username = 2;
-  string nickname = 3;
-  string avatar = 4;
-  string gender = 5;
-  string region = 6;
-  string partner = 7;
-  google.protobuf.Timestamp created_at = 8;
-  google.protobuf.Timestamp updated_at = 9;
-}
-
-// 宠物信息
-message Pet {
-  int64 pet_id = 1;
-  int64 user_id = 2;
-  string name = 3;
-  string species = 4;
-  string gender = 5;
-  double weight = 6;
-  repeated string hobbies = 7;
-  google.protobuf.Timestamp birthday = 8;
-  google.protobuf.Timestamp adoption_date = 9;
-  google.protobuf.Timestamp passed_away_date = 10;
-  string memorial_words = 11;
-  int64 avatar_id = 12;
-  string background_image = 13;
-  google.protobuf.Timestamp created_at = 14;
-  google.protobuf.Timestamp updated_at = 15;
-}
-
-// 注册请求
-message RegisterRequest {
-  string username = 1;
-  string password = 2;
-  string nickname = 3;
-  string email = 4;
-}
-
-// 注册响应
-message RegisterReply {
-  User user = 1;
-  string token = 2;
-}
-
-// 登录请求
-message LoginRequest {
-  string username = 1;
-  string password = 2;
-}
-
-// 登录响应
-message LoginReply {
-  User user = 1;
-  string token = 2;
-}
-
-// 获取用户信息请求
-message GetUserInfoRequest {
-  int64 user_id = 1;
-}
-
-// 获取用户信息响应
-message GetUserInfoReply {
-  User user = 1;
-  repeated Pet pets = 2;
-  int32 following_count = 3;
-  int32 followers_count = 4;
-  int32 posts_count = 5;
-}
-
-// 更新用户信息请求
-message UpdateUserInfoRequest {
-  int64 user_id = 1;
-  string nickname = 2;
-  string avatar = 3;
-  string gender = 4;
-  string region = 5;
-  string partner = 6;
-}
-
-// 更新用户信息响应
-message UpdateUserInfoReply {
-  User user = 1;
-}
-
-// 关注用户请求
-message FollowUserRequest {
-  int64 user_id = 1;
-  int64 target_user_id = 2;
-}
-
-// 关注用户响应
-message FollowUserReply {
-  bool success = 1;
-}
+// 关注请求
+message FollowUserRequest { int64 target_user_id = 1; } // 目标用户ID
+message FollowUserReply { bool success = 1; }           // 是否成功
 
 // 取消关注请求
-message UnfollowUserRequest {
-  int64 user_id = 1;
-  int64 target_user_id = 2;
+message UnfollowUserRequest { int64 target_user_id = 1; } // 目标用户ID
+message UnfollowUserReply { bool success = 1; }           // 是否成功
+
+// 帖子简要信息（用于主页/点赞列表）
+message PostBrief {
+  int64 id = 1;            // 帖子ID
+  string title = 2;        // 标题
+  int32 post_type = 3;     // 0图文 1视频
+  string cover_url = 4;    // 封面URL
+  int32 liked_count = 5;   // 点赞数
+  string created_at = 6;   // 创建时间 YYYY-MM-DD HH:MM:SS
 }
 
-// 取消关注响应
-message UnfollowUserReply {
-  bool success = 1;
+// 用户主页请求
+message GetUserProfileRequest { int64 user_id = 1; }
+
+// 用户主页响应
+message GetUserProfileReply {
+  string avatar = 1;        // 头像URL
+  string nickname = 2;      // 昵称
+  string pet_name = 3;      // 宠物名称
+  int32 pet_sex = 4;        // 宠物性别 0未知/1男/2女
+  string kind = 5;          // 宠物品类
+  int32 weight = 6;         // 体重(kg)
+  string hobby = 7;         // 爱好
+  string description = 8;   // 简介
+  repeated PostBrief posts = 9; // 最近的帖子
+  bool is_followed = 10;    // 当前登录用户是否已关注该用户
 }
 
-// 获取关注列表请求
-message GetFollowingListRequest {
-  int64 user_id = 1;
-  int32 page = 2;
-  int32 page_size = 3;
-}
+// 用户简要
+message UserBrief { int64 id = 1; string nickname = 2; string avatar = 3; }
 
-// 获取关注列表响应
-message GetFollowingListReply {
-  repeated User users = 1;
-  int32 total = 2;
-}
+// 关注列表请求/响应
+message GetFollowListRequest { int64 user_id = 1; int32 page = 2; int32 page_size = 3; }
+message GetFollowListReply { int32 total = 1; repeated UserBrief list = 2; }
 
-// 获取粉丝列表请求
-message GetFollowersListRequest {
-  int64 user_id = 1;
-  int32 page = 2;
-  int32 page_size = 3;
-}
-
-// 获取粉丝列表响应
-message GetFollowersListReply {
-  repeated User users = 1;
-  int32 total = 2;
-} 
+// 点赞列表请求/响应
+message GetLikeListRequest { int64 user_id = 1; int32 page = 2; int32 page_size = 3; }
+message GetLikeListReply { int32 total = 1; repeated PostBrief list = 2; } 
