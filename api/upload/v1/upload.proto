@@ -7,17 +7,34 @@ import "google/api/annotations.proto";
 option go_package = "pet-angel/api/upload/v1;v1";
 
 // 上传服务
-// 推荐直传 MinIO：服务端签发预签信息，前端直传；或使用后端中转完成登记
+// 当前实现：后端中转保存到本地服务器目录，并返回可访问 URL
+// 说明：
+// - 统一入口 /v1/upload/file，表单字段：file（必填），type（可选：avatar/image/video）
+// - 资源会保存到 {local_root}/{type}/{YYYY/MM/DD}/ 文件夹
+// - 返回可直接访问的 URL（以 public_prefix 开头，如 /static/...）
 service UploadService {
-  // 获取直传预签名（推荐）
+  // 本地表单文件上传（multipart/form-data）
+  rpc UploadFile(UploadFileRequest) returns (UploadFileReply) {
+    option (google.api.http) = { post: "/v1/upload/file" body: "*" };
+  }
+
+  // 以下接口为兼容未来直传方案的占位
+  // 获取直传预签名（占位，当前返回未实现）
   rpc GetPresign(GetPresignRequest) returns (GetPresignReply) {
     option (google.api.http) = { get: "/v1/upload/presign" };
   }
-  // 上传完成登记（后端中转模式或直传完成后回调登记）
+  // 上传完成登记（占位，当前回显输入）
   rpc UploadDone(UploadDoneRequest) returns (UploadDoneReply) {
     option (google.api.http) = { post: "/v1/upload/done" body: "*" };
   }
 }
+
+// 表单上传请求
+message UploadFileRequest {
+  string type = 1; // 资源类别（avatar/image/video），也可由表单字段传入
+}
+// 表单上传响应
+message UploadFileReply { string url = 1; }
 
 // 预签名请求
 message GetPresignRequest {

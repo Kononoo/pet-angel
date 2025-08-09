@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	UploadService_UploadFile_FullMethodName = "/api.upload.v1.UploadService/UploadFile"
 	UploadService_GetPresign_FullMethodName = "/api.upload.v1.UploadService/GetPresign"
 	UploadService_UploadDone_FullMethodName = "/api.upload.v1.UploadService/UploadDone"
 )
@@ -28,11 +29,18 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // 上传服务
-// 推荐直传 MinIO：服务端签发预签信息，前端直传；或使用后端中转完成登记
+// 当前实现：后端中转保存到本地服务器目录，并返回可访问 URL
+// 说明：
+// - 统一入口 /v1/upload/file，表单字段：file（必填），type（可选：avatar/image/video）
+// - 资源会保存到 {local_root}/{type}/{YYYY/MM/DD}/ 文件夹
+// - 返回可直接访问的 URL（以 public_prefix 开头，如 /static/...）
 type UploadServiceClient interface {
-	// 获取直传预签名（推荐）
+	// 本地表单文件上传（multipart/form-data）
+	UploadFile(ctx context.Context, in *UploadFileRequest, opts ...grpc.CallOption) (*UploadFileReply, error)
+	// 以下接口为兼容未来直传方案的占位
+	// 获取直传预签名（占位，当前返回未实现）
 	GetPresign(ctx context.Context, in *GetPresignRequest, opts ...grpc.CallOption) (*GetPresignReply, error)
-	// 上传完成登记（后端中转模式或直传完成后回调登记）
+	// 上传完成登记（占位，当前回显输入）
 	UploadDone(ctx context.Context, in *UploadDoneRequest, opts ...grpc.CallOption) (*UploadDoneReply, error)
 }
 
@@ -42,6 +50,16 @@ type uploadServiceClient struct {
 
 func NewUploadServiceClient(cc grpc.ClientConnInterface) UploadServiceClient {
 	return &uploadServiceClient{cc}
+}
+
+func (c *uploadServiceClient) UploadFile(ctx context.Context, in *UploadFileRequest, opts ...grpc.CallOption) (*UploadFileReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UploadFileReply)
+	err := c.cc.Invoke(ctx, UploadService_UploadFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *uploadServiceClient) GetPresign(ctx context.Context, in *GetPresignRequest, opts ...grpc.CallOption) (*GetPresignReply, error) {
@@ -69,11 +87,18 @@ func (c *uploadServiceClient) UploadDone(ctx context.Context, in *UploadDoneRequ
 // for forward compatibility.
 //
 // 上传服务
-// 推荐直传 MinIO：服务端签发预签信息，前端直传；或使用后端中转完成登记
+// 当前实现：后端中转保存到本地服务器目录，并返回可访问 URL
+// 说明：
+// - 统一入口 /v1/upload/file，表单字段：file（必填），type（可选：avatar/image/video）
+// - 资源会保存到 {local_root}/{type}/{YYYY/MM/DD}/ 文件夹
+// - 返回可直接访问的 URL（以 public_prefix 开头，如 /static/...）
 type UploadServiceServer interface {
-	// 获取直传预签名（推荐）
+	// 本地表单文件上传（multipart/form-data）
+	UploadFile(context.Context, *UploadFileRequest) (*UploadFileReply, error)
+	// 以下接口为兼容未来直传方案的占位
+	// 获取直传预签名（占位，当前返回未实现）
 	GetPresign(context.Context, *GetPresignRequest) (*GetPresignReply, error)
-	// 上传完成登记（后端中转模式或直传完成后回调登记）
+	// 上传完成登记（占位，当前回显输入）
 	UploadDone(context.Context, *UploadDoneRequest) (*UploadDoneReply, error)
 	mustEmbedUnimplementedUploadServiceServer()
 }
@@ -85,6 +110,9 @@ type UploadServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUploadServiceServer struct{}
 
+func (UnimplementedUploadServiceServer) UploadFile(context.Context, *UploadFileRequest) (*UploadFileReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadFile not implemented")
+}
 func (UnimplementedUploadServiceServer) GetPresign(context.Context, *GetPresignRequest) (*GetPresignReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPresign not implemented")
 }
@@ -110,6 +138,24 @@ func RegisterUploadServiceServer(s grpc.ServiceRegistrar, srv UploadServiceServe
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&UploadService_ServiceDesc, srv)
+}
+
+func _UploadService_UploadFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadServiceServer).UploadFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadService_UploadFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadServiceServer).UploadFile(ctx, req.(*UploadFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _UploadService_GetPresign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -155,6 +201,10 @@ var UploadService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "api.upload.v1.UploadService",
 	HandlerType: (*UploadServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UploadFile",
+			Handler:    _UploadService_UploadFile_Handler,
+		},
 		{
 			MethodName: "GetPresign",
 			Handler:    _UploadService_GetPresign_Handler,

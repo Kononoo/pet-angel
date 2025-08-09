@@ -21,18 +21,45 @@ const _ = http.SupportPackageIsVersion1
 
 const OperationUploadServiceGetPresign = "/api.upload.v1.UploadService/GetPresign"
 const OperationUploadServiceUploadDone = "/api.upload.v1.UploadService/UploadDone"
+const OperationUploadServiceUploadFile = "/api.upload.v1.UploadService/UploadFile"
 
 type UploadServiceHTTPServer interface {
-	// GetPresign 获取直传预签名（推荐）
+	// GetPresign 以下接口为兼容未来直传方案的占位
+	// 获取直传预签名（占位，当前返回未实现）
 	GetPresign(context.Context, *GetPresignRequest) (*GetPresignReply, error)
-	// UploadDone 上传完成登记（后端中转模式或直传完成后回调登记）
+	// UploadDone 上传完成登记（占位，当前回显输入）
 	UploadDone(context.Context, *UploadDoneRequest) (*UploadDoneReply, error)
+	// UploadFile 本地表单文件上传（multipart/form-data）
+	UploadFile(context.Context, *UploadFileRequest) (*UploadFileReply, error)
 }
 
 func RegisterUploadServiceHTTPServer(s *http.Server, srv UploadServiceHTTPServer) {
 	r := s.Route("/")
+	r.POST("/v1/upload/file", _UploadService_UploadFile0_HTTP_Handler(srv))
 	r.GET("/v1/upload/presign", _UploadService_GetPresign0_HTTP_Handler(srv))
 	r.POST("/v1/upload/done", _UploadService_UploadDone0_HTTP_Handler(srv))
+}
+
+func _UploadService_UploadFile0_HTTP_Handler(srv UploadServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in UploadFileRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationUploadServiceUploadFile)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.UploadFile(ctx, req.(*UploadFileRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*UploadFileReply)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _UploadService_GetPresign0_HTTP_Handler(srv UploadServiceHTTPServer) func(ctx http.Context) error {
@@ -79,6 +106,7 @@ func _UploadService_UploadDone0_HTTP_Handler(srv UploadServiceHTTPServer) func(c
 type UploadServiceHTTPClient interface {
 	GetPresign(ctx context.Context, req *GetPresignRequest, opts ...http.CallOption) (rsp *GetPresignReply, err error)
 	UploadDone(ctx context.Context, req *UploadDoneRequest, opts ...http.CallOption) (rsp *UploadDoneReply, err error)
+	UploadFile(ctx context.Context, req *UploadFileRequest, opts ...http.CallOption) (rsp *UploadFileReply, err error)
 }
 
 type UploadServiceHTTPClientImpl struct {
@@ -107,6 +135,19 @@ func (c *UploadServiceHTTPClientImpl) UploadDone(ctx context.Context, in *Upload
 	pattern := "/v1/upload/done"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationUploadServiceUploadDone))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *UploadServiceHTTPClientImpl) UploadFile(ctx context.Context, in *UploadFileRequest, opts ...http.CallOption) (*UploadFileReply, error) {
+	var out UploadFileReply
+	pattern := "/v1/upload/file"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationUploadServiceUploadFile))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {

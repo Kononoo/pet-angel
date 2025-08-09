@@ -110,6 +110,7 @@ type UserDTO struct {
 	Nickname    string
 	Avatar      string
 	ModelID     int64
+	ModelURL    string
 	PetName     string
 	PetAvatar   string
 	PetSex      int32

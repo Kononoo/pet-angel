@@ -47,7 +47,7 @@ else
 fi
 
 # 5) 运行（kratos run）
-CMD=(kratos run -conf ./configs)
+CMD=(kratos run -- -conf ./configs)
 echo "[INFO] Starting: ${CMD[*]}"
 if [[ "$DAEMON" == "--daemon" ]]; then
   # 后台运行到 nohup 日志

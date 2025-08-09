@@ -18,6 +18,7 @@ CREATE TABLE `users` (
   `password`     varchar(255) DEFAULT '' COMMENT '密码哈希（bcrypt）',
   `avatar`       varchar(255) DEFAULT NULL COMMENT '用户头像URL',
   `model_id`     bigint(20)   NOT NULL COMMENT '当前宠物模型ID（关联 pet_models.id）',
+  `model_url`    varchar(255) NOT NULL DEFAULT '/models/Dog_1.glb' COMMENT '当前宠物模型URL',
   `pet_name`     varchar(50)  DEFAULT NULL COMMENT '宠物名称',
   `pet_avatar`   varchar(255) DEFAULT NULL COMMENT '宠物头像URL',
   `pet_sex`      tinyint(1)   DEFAULT 0 COMMENT '宠物性别 0-未知 1-男 2-女',

@@ -22,6 +22,96 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 表单上传请求
+type UploadFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"` // 资源类别（avatar/image/video），也可由表单字段传入
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadFileRequest) Reset() {
+	*x = UploadFileRequest{}
+	mi := &file_upload_v1_upload_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadFileRequest) ProtoMessage() {}
+
+func (x *UploadFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_v1_upload_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadFileRequest.ProtoReflect.Descriptor instead.
+func (*UploadFileRequest) Descriptor() ([]byte, []int) {
+	return file_upload_v1_upload_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *UploadFileRequest) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+// 表单上传响应
+type UploadFileReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadFileReply) Reset() {
+	*x = UploadFileReply{}
+	mi := &file_upload_v1_upload_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadFileReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadFileReply) ProtoMessage() {}
+
+func (x *UploadFileReply) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_v1_upload_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadFileReply.ProtoReflect.Descriptor instead.
+func (*UploadFileReply) Descriptor() ([]byte, []int) {
+	return file_upload_v1_upload_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UploadFileReply) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
 // 预签名请求
 type GetPresignRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -33,7 +123,7 @@ type GetPresignRequest struct {
 
 func (x *GetPresignRequest) Reset() {
 	*x = GetPresignRequest{}
-	mi := &file_upload_v1_upload_proto_msgTypes[0]
+	mi := &file_upload_v1_upload_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +135,7 @@ func (x *GetPresignRequest) String() string {
 func (*GetPresignRequest) ProtoMessage() {}
 
 func (x *GetPresignRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_v1_upload_proto_msgTypes[0]
+	mi := &file_upload_v1_upload_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +148,7 @@ func (x *GetPresignRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPresignRequest.ProtoReflect.Descriptor instead.
 func (*GetPresignRequest) Descriptor() ([]byte, []int) {
-	return file_upload_v1_upload_proto_rawDescGZIP(), []int{0}
+	return file_upload_v1_upload_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetPresignRequest) GetFileName() string {
@@ -88,7 +178,7 @@ type GetPresignReply struct {
 
 func (x *GetPresignReply) Reset() {
 	*x = GetPresignReply{}
-	mi := &file_upload_v1_upload_proto_msgTypes[1]
+	mi := &file_upload_v1_upload_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -100,7 +190,7 @@ func (x *GetPresignReply) String() string {
 func (*GetPresignReply) ProtoMessage() {}
 
 func (x *GetPresignReply) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_v1_upload_proto_msgTypes[1]
+	mi := &file_upload_v1_upload_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -113,7 +203,7 @@ func (x *GetPresignReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPresignReply.ProtoReflect.Descriptor instead.
 func (*GetPresignReply) Descriptor() ([]byte, []int) {
-	return file_upload_v1_upload_proto_rawDescGZIP(), []int{1}
+	return file_upload_v1_upload_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetPresignReply) GetUrl() string {
@@ -154,7 +244,7 @@ type UploadDoneRequest struct {
 
 func (x *UploadDoneRequest) Reset() {
 	*x = UploadDoneRequest{}
-	mi := &file_upload_v1_upload_proto_msgTypes[2]
+	mi := &file_upload_v1_upload_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -166,7 +256,7 @@ func (x *UploadDoneRequest) String() string {
 func (*UploadDoneRequest) ProtoMessage() {}
 
 func (x *UploadDoneRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_v1_upload_proto_msgTypes[2]
+	mi := &file_upload_v1_upload_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -179,7 +269,7 @@ func (x *UploadDoneRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadDoneRequest.ProtoReflect.Descriptor instead.
 func (*UploadDoneRequest) Descriptor() ([]byte, []int) {
-	return file_upload_v1_upload_proto_rawDescGZIP(), []int{2}
+	return file_upload_v1_upload_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UploadDoneRequest) GetUrl() string {
@@ -199,7 +289,7 @@ type UploadDoneReply struct {
 
 func (x *UploadDoneReply) Reset() {
 	*x = UploadDoneReply{}
-	mi := &file_upload_v1_upload_proto_msgTypes[3]
+	mi := &file_upload_v1_upload_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -211,7 +301,7 @@ func (x *UploadDoneReply) String() string {
 func (*UploadDoneReply) ProtoMessage() {}
 
 func (x *UploadDoneReply) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_v1_upload_proto_msgTypes[3]
+	mi := &file_upload_v1_upload_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +314,7 @@ func (x *UploadDoneReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadDoneReply.ProtoReflect.Descriptor instead.
 func (*UploadDoneReply) Descriptor() ([]byte, []int) {
-	return file_upload_v1_upload_proto_rawDescGZIP(), []int{3}
+	return file_upload_v1_upload_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UploadDoneReply) GetUrl() string {
@@ -238,7 +328,11 @@ var File_upload_v1_upload_proto protoreflect.FileDescriptor
 
 const file_upload_v1_upload_proto_rawDesc = "" +
 	"\n" +
-	"\x16upload/v1/upload.proto\x12\rapi.upload.v1\x1a\x1cgoogle/api/annotations.proto\"S\n" +
+	"\x16upload/v1/upload.proto\x12\rapi.upload.v1\x1a\x1cgoogle/api/annotations.proto\"'\n" +
+	"\x11UploadFileRequest\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\"#\n" +
+	"\x0fUploadFileReply\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"S\n" +
 	"\x11GetPresignRequest\x12\x1b\n" +
 	"\tfile_name\x18\x01 \x01(\tR\bfileName\x12!\n" +
 	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\"\xdb\x01\n" +
@@ -253,8 +347,10 @@ const file_upload_v1_upload_proto_rawDesc = "" +
 	"\x11UploadDoneRequest\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\"#\n" +
 	"\x0fUploadDoneReply\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url2\xe7\x01\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url2\xd3\x02\n" +
 	"\rUploadService\x12j\n" +
+	"\n" +
+	"UploadFile\x12 .api.upload.v1.UploadFileRequest\x1a\x1e.api.upload.v1.UploadFileReply\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/upload/file\x12j\n" +
 	"\n" +
 	"GetPresign\x12 .api.upload.v1.GetPresignRequest\x1a\x1e.api.upload.v1.GetPresignReply\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/upload/presign\x12j\n" +
 	"\n" +
@@ -272,22 +368,26 @@ func file_upload_v1_upload_proto_rawDescGZIP() []byte {
 	return file_upload_v1_upload_proto_rawDescData
 }
 
-var file_upload_v1_upload_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_upload_v1_upload_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_upload_v1_upload_proto_goTypes = []any{
-	(*GetPresignRequest)(nil), // 0: api.upload.v1.GetPresignRequest
-	(*GetPresignReply)(nil),   // 1: api.upload.v1.GetPresignReply
-	(*UploadDoneRequest)(nil), // 2: api.upload.v1.UploadDoneRequest
-	(*UploadDoneReply)(nil),   // 3: api.upload.v1.UploadDoneReply
-	nil,                       // 4: api.upload.v1.GetPresignReply.HeadersEntry
+	(*UploadFileRequest)(nil), // 0: api.upload.v1.UploadFileRequest
+	(*UploadFileReply)(nil),   // 1: api.upload.v1.UploadFileReply
+	(*GetPresignRequest)(nil), // 2: api.upload.v1.GetPresignRequest
+	(*GetPresignReply)(nil),   // 3: api.upload.v1.GetPresignReply
+	(*UploadDoneRequest)(nil), // 4: api.upload.v1.UploadDoneRequest
+	(*UploadDoneReply)(nil),   // 5: api.upload.v1.UploadDoneReply
+	nil,                       // 6: api.upload.v1.GetPresignReply.HeadersEntry
 }
 var file_upload_v1_upload_proto_depIdxs = []int32{
-	4, // 0: api.upload.v1.GetPresignReply.headers:type_name -> api.upload.v1.GetPresignReply.HeadersEntry
-	0, // 1: api.upload.v1.UploadService.GetPresign:input_type -> api.upload.v1.GetPresignRequest
-	2, // 2: api.upload.v1.UploadService.UploadDone:input_type -> api.upload.v1.UploadDoneRequest
-	1, // 3: api.upload.v1.UploadService.GetPresign:output_type -> api.upload.v1.GetPresignReply
-	3, // 4: api.upload.v1.UploadService.UploadDone:output_type -> api.upload.v1.UploadDoneReply
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
+	6, // 0: api.upload.v1.GetPresignReply.headers:type_name -> api.upload.v1.GetPresignReply.HeadersEntry
+	0, // 1: api.upload.v1.UploadService.UploadFile:input_type -> api.upload.v1.UploadFileRequest
+	2, // 2: api.upload.v1.UploadService.GetPresign:input_type -> api.upload.v1.GetPresignRequest
+	4, // 3: api.upload.v1.UploadService.UploadDone:input_type -> api.upload.v1.UploadDoneRequest
+	1, // 4: api.upload.v1.UploadService.UploadFile:output_type -> api.upload.v1.UploadFileReply
+	3, // 5: api.upload.v1.UploadService.GetPresign:output_type -> api.upload.v1.GetPresignReply
+	5, // 6: api.upload.v1.UploadService.UploadDone:output_type -> api.upload.v1.UploadDoneReply
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -304,7 +404,7 @@ func file_upload_v1_upload_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_upload_v1_upload_proto_rawDesc), len(file_upload_v1_upload_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -46,8 +46,9 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, minioCo
 	messageRepoImpl := data.NewMessageRepo(dataData)
 	messageUsecase := biz.NewMessageUsecase(messageRepoImpl)
 	messageService := service.NewMessageService(messageUsecase, logger)
-	grpcServer := server.NewGRPCServer(srv, greeterService, authService, userService, communityService, avatarService, messageService, logger)
-	httpServer := server.NewHTTPServer(srv, storageConf, greeterService, authService, userService, communityService, avatarService, messageService, logger)
+	uploadService := service.NewUploadService(storageConf, logger)
+	grpcServer := server.NewGRPCServer(srv, greeterService, authService, userService, communityService, avatarService, messageService, uploadService, logger)
+	httpServer := server.NewHTTPServer(srv, storageConf, greeterService, authService, userService, communityService, avatarService, messageService, uploadService, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()

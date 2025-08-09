@@ -15,6 +15,7 @@ type User struct {
 	Nickname    string    // 昵称
 	Avatar      string    // 头像URL
 	ModelID     int64     // 当前模型ID
+	ModelURL    string    // 当前模型URL（与 pet_models.path 一致）
 	PetName     string    // 宠物名称
 	PetAvatar   string    // 宠物头像
 	PetSex      int32     // 宠物性别 0未知/1男/2女

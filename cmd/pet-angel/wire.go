@@ -54,6 +54,7 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, minioCo
 		service.NewCommunityService,
 		service.NewAvatarService,
 		service.NewMessageService,
+		service.NewUploadService,
 
 		// server
 		server.NewHTTPServer,

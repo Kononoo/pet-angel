@@ -94,6 +94,7 @@ func (s *AuthService) GetUserInfo(ctx context.Context, in *authv1.GetUserInfoReq
 		Description: u.Description,
 		Coins:       u.Coins,
 		CreatedAt:   u.CreatedAt.Format("2006-01-02 15:04:05"),
+		ModelUrl:    u.ModelURL,
 	}, nil
 }
 
@@ -119,6 +120,7 @@ func (s *AuthService) UpdateUserInfo(ctx context.Context, in *authv1.UpdateUserI
 		Nickname:    in.GetNickname(),
 		Avatar:      in.GetAvatar(),
 		ModelID:     in.GetModelId(),
+		ModelURL:    "", // 暂不从请求更新；如需支持，可在 proto 中补充字段
 		PetName:     in.GetPetName(),
 		PetAvatar:   in.GetPetAvatar(),
 		PetSex:      in.GetPetSex(),

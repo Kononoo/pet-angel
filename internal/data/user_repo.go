@@ -16,6 +16,7 @@ type UserModel struct {
 	Nickname    string `gorm:"column:nickname;size:50"`                      // 昵称
 	Avatar      string `gorm:"column:avatar;size:255"`                       // 头像
 	ModelID     int64  `gorm:"column:model_id"`                              // 当前模型
+	ModelURL    string `gorm:"column:model_url;size:255"`                    // 当前模型URL
 	PetName     string `gorm:"column:pet_name;size:50"`                      // 宠物名
 	PetAvatar   string `gorm:"column:pet_avatar;size:255"`                   // 宠物头像
 	PetSex      int32  `gorm:"column:pet_sex"`                               // 宠物性别
@@ -111,6 +112,7 @@ func (r *UserRepoImpl) GetUserByID(ctx context.Context, userID int64) (*biz.User
 		Nickname:    m.Nickname,
 		Avatar:      m.Avatar,
 		ModelID:     m.ModelID,
+		ModelURL:    m.ModelURL,
 		PetName:     m.PetName,
 		PetAvatar:   m.PetAvatar,
 		PetSex:      m.PetSex,

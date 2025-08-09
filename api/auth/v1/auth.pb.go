@@ -277,6 +277,7 @@ type GetUserInfoReply struct {
 	Description   string                 `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"`              // 个人/宠物简介
 	Coins         int32                  `protobuf:"varint,12,opt,name=coins,proto3" json:"coins,omitempty"`                         // 金币余额
 	CreatedAt     string                 `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` // 创建时间 YYYY-MM-DD HH:MM:SS
+	ModelUrl      string                 `protobuf:"bytes,14,opt,name=model_url,json=modelUrl,proto3" json:"model_url,omitempty"`    // 当前宠物模型URL（与 pet_models.path 一致）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -398,6 +399,13 @@ func (x *GetUserInfoReply) GetCoins() int32 {
 func (x *GetUserInfoReply) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *GetUserInfoReply) GetModelUrl() string {
+	if x != nil {
+		return x.ModelUrl
 	}
 	return ""
 }
@@ -581,7 +589,7 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x0eReloginRequest\"&\n" +
 	"\fReloginReply\x12\x16\n" +
 	"\x06expire\x18\x01 \x01(\bR\x06expire\"\x14\n" +
-	"\x12GetUserInfoRequest\"\xe6\x02\n" +
+	"\x12GetUserInfoRequest\"\x83\x03\n" +
 	"\x10GetUserInfoReply\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1a\n" +
 	"\bnickname\x18\x02 \x01(\tR\bnickname\x12\x16\n" +
@@ -598,7 +606,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\vdescription\x18\v \x01(\tR\vdescription\x12\x14\n" +
 	"\x05coins\x18\f \x01(\x05R\x05coins\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\r \x01(\tR\tcreatedAt\"\x9d\x02\n" +
+	"created_at\x18\r \x01(\tR\tcreatedAt\x12\x1b\n" +
+	"\tmodel_url\x18\x0e \x01(\tR\bmodelUrl\"\x9d\x02\n" +
 	"\x15UpdateUserInfoRequest\x12\x1a\n" +
 	"\bnickname\x18\x01 \x01(\tR\bnickname\x12\x16\n" +
 	"\x06avatar\x18\x02 \x01(\tR\x06avatar\x12\x19\n" +

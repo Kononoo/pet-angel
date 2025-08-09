@@ -31,6 +31,7 @@ func dtoToBiz(u *UserDTO) *biz.User {
 		Nickname:    u.Nickname,
 		Avatar:      u.Avatar,
 		ModelID:     u.ModelID,
+		ModelURL:    u.ModelURL,
 		PetName:     u.PetName,
 		PetAvatar:   u.PetAvatar,
 		PetSex:      u.PetSex,
@@ -46,10 +47,10 @@ func dtoToBiz(u *UserDTO) *biz.User {
 // --- MySQL helpers ---
 
 func (r *AuthRepo) getByUsernameSQL(ctx context.Context, username string) (*biz.User, error) {
-	row := r.data.DB.QueryRowContext(ctx, `SELECT id,username,password,nickname,avatar,model_id,pet_name,pet_avatar,pet_sex,kind,weight,hobby,description,coins,created_at FROM users WHERE username=?`, username)
+	row := r.data.DB.QueryRowContext(ctx, `SELECT id,username,password,nickname,avatar,model_id,model_url,pet_name,pet_avatar,pet_sex,kind,weight,hobby,description,coins,created_at FROM users WHERE username=?`, username)
 	var u biz.User
 	var createdAt time.Time
-	err := row.Scan(&u.Id, &u.Username, &u.Password, &u.Nickname, &u.Avatar, &u.ModelID, &u.PetName, &u.PetAvatar, &u.PetSex, &u.Kind, &u.Weight, &u.Hobby, &u.Description, &u.Coins, &createdAt)
+	err := row.Scan(&u.Id, &u.Username, &u.Password, &u.Nickname, &u.Avatar, &u.ModelID, &u.ModelURL, &u.PetName, &u.PetAvatar, &u.PetSex, &u.Kind, &u.Weight, &u.Hobby, &u.Description, &u.Coins, &createdAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, biz.ErrUserNotFound
@@ -61,10 +62,10 @@ func (r *AuthRepo) getByUsernameSQL(ctx context.Context, username string) (*biz.
 }
 
 func (r *AuthRepo) getByIDSQL(ctx context.Context, userID int64) (*biz.User, error) {
-	row := r.data.DB.QueryRowContext(ctx, `SELECT id,username,password,nickname,avatar,model_id,pet_name,pet_avatar,pet_sex,kind,weight,hobby,description,coins,created_at FROM users WHERE id=?`, userID)
+	row := r.data.DB.QueryRowContext(ctx, `SELECT id,username,password,nickname,avatar,model_id,model_url,pet_name,pet_avatar,pet_sex,kind,weight,hobby,description,coins,created_at FROM users WHERE id=?`, userID)
 	var u biz.User
 	var createdAt time.Time
-	err := row.Scan(&u.Id, &u.Username, &u.Password, &u.Nickname, &u.Avatar, &u.ModelID, &u.PetName, &u.PetAvatar, &u.PetSex, &u.Kind, &u.Weight, &u.Hobby, &u.Description, &u.Coins, &createdAt)
+	err := row.Scan(&u.Id, &u.Username, &u.Password, &u.Nickname, &u.Avatar, &u.ModelID, &u.ModelURL, &u.PetName, &u.PetAvatar, &u.PetSex, &u.Kind, &u.Weight, &u.Hobby, &u.Description, &u.Coins, &createdAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, biz.ErrUserNotFound
@@ -81,8 +82,12 @@ func (r *AuthRepo) createSQL(ctx context.Context, user *biz.User) (int64, error)
 	if err != nil {
 		return 0, err
 	}
-	res, err := r.data.DB.ExecContext(ctx, `INSERT INTO users(username,password,nickname,avatar,model_id,pet_name,pet_avatar,pet_sex,kind,weight,hobby,description,coins,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())`,
-		user.Username, string(hash), user.Nickname, user.Avatar, user.ModelID, user.PetName, user.PetAvatar, user.PetSex, user.Kind, user.Weight, user.Hobby, user.Description, 0,
+	// 默认模型与URL
+	if user.ModelURL == "" {
+		user.ModelURL = "/models/Dog_1.glb"
+	}
+	res, err := r.data.DB.ExecContext(ctx, `INSERT INTO users(username,password,nickname,avatar,model_id,model_url,pet_name,pet_avatar,pet_sex,kind,weight,hobby,description,coins,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())`,
+		user.Username, string(hash), user.Nickname, user.Avatar, user.ModelID, user.ModelURL, user.PetName, user.PetAvatar, user.PetSex, user.Kind, user.Weight, user.Hobby, user.Description, 0,
 	)
 	if err != nil {
 		return 0, err
@@ -95,8 +100,8 @@ func (r *AuthRepo) createSQL(ctx context.Context, user *biz.User) (int64, error)
 }
 
 func (r *AuthRepo) updateInfoSQL(ctx context.Context, user *biz.User) error {
-	_, err := r.data.DB.ExecContext(ctx, `UPDATE users SET nickname=IF(?<>'',?,nickname), avatar=IF(?<>'',?,avatar), model_id=IF(?<>0,?,model_id), pet_name=IF(?<>'',?,pet_name), pet_avatar=IF(?<>'',?,pet_avatar), pet_sex=IF(?<>0,?,pet_sex), kind=IF(?<>'',?,kind), weight=IF(?<>0,?,weight), hobby=IF(?<>'',?,hobby), description=IF(?<>'',?,description), updated_at=NOW() WHERE id=?`,
-		user.Nickname, user.Nickname, user.Avatar, user.Avatar, user.ModelID, user.ModelID, user.PetName, user.PetName, user.PetAvatar, user.PetAvatar, user.PetSex, user.PetSex, user.Kind, user.Kind, user.Weight, user.Weight, user.Hobby, user.Hobby, user.Description, user.Description, user.Id,
+	_, err := r.data.DB.ExecContext(ctx, `UPDATE users SET nickname=IF(?<>'',?,nickname), avatar=IF(?<>'',?,avatar), model_id=IF(?<>0,?,model_id), model_url=IF(?<>'',?,model_url), pet_name=IF(?<>'',?,pet_name), pet_avatar=IF(?<>'',?,pet_avatar), pet_sex=IF(?<>0,?,pet_sex), kind=IF(?<>'',?,kind), weight=IF(?<>0,?,weight), hobby=IF(?<>'',?,hobby), description=IF(?<>'',?,description), updated_at=NOW() WHERE id=?`,
+		user.Nickname, user.Nickname, user.Avatar, user.Avatar, user.ModelID, user.ModelID, user.ModelURL, user.ModelURL, user.PetName, user.PetName, user.PetAvatar, user.PetAvatar, user.PetSex, user.PetSex, user.Kind, user.Kind, user.Weight, user.Weight, user.Hobby, user.Hobby, user.Description, user.Description, user.Id,
 	)
 	return err
 }
@@ -147,7 +152,10 @@ func (r *AuthRepo) Create(ctx context.Context, user *biz.User) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	d := &UserDTO{ID: id, Username: user.Username, Password: string(hash), Nickname: user.Nickname, Avatar: user.Avatar, ModelID: user.ModelID, PetName: user.PetName, PetAvatar: user.PetAvatar, PetSex: user.PetSex, Kind: user.Kind, Weight: user.Weight, Hobby: user.Hobby, Description: user.Description, Coins: 0, CreatedAt: time.Now().Unix()}
+	if user.ModelURL == "" {
+		user.ModelURL = "/models/Dog_1.glb"
+	}
+	d := &UserDTO{ID: id, Username: user.Username, Password: string(hash), Nickname: user.Nickname, Avatar: user.Avatar, ModelID: user.ModelID, ModelURL: user.ModelURL, PetName: user.PetName, PetAvatar: user.PetAvatar, PetSex: user.PetSex, Kind: user.Kind, Weight: user.Weight, Hobby: user.Hobby, Description: user.Description, Coins: 0, CreatedAt: time.Now().Unix()}
 	r.data.userByID[id] = d
 	r.data.userByUsername[user.Username] = d
 	return id, nil
@@ -172,6 +180,9 @@ func (r *AuthRepo) UpdateInfo(ctx context.Context, user *biz.User) error {
 	}
 	if user.ModelID != 0 {
 		u.ModelID = user.ModelID
+	}
+	if user.ModelURL != "" {
+		u.ModelURL = user.ModelURL
 	}
 	if user.PetName != "" {
 		u.PetName = user.PetName
