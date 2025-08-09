@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"pet-angel/internal/biz"
+
+	"gorm.io/gorm/clause"
 )
 
 // GORM 模型：用户表（只含 user 模块需要字段）
@@ -66,12 +68,10 @@ func (r *UserRepoImpl) Follow(ctx context.Context, followerID, followeeID int64)
 	if r.data.Gorm == nil {
 		return nil
 	}
-	return r.data.Gorm.WithContext(ctx).Clauses(
-	// upsert 由复合主键保证幂等
-	).Create(&FollowModel{
-		FollowerID: followerID,
-		FolloweeID: followeeID,
-	}).Error
+	// 真正幂等：若已存在则忽略
+	return r.data.Gorm.WithContext(ctx).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(&FollowModel{FollowerID: followerID, FolloweeID: followeeID}).Error
 }
 
 func (r *UserRepoImpl) Unfollow(ctx context.Context, followerID, followeeID int64) error {
@@ -223,4 +223,16 @@ func (r *UserRepoImpl) GetLikeList(ctx context.Context, userID int64, page, page
 		})
 	}
 	return out, int32(total), nil
+}
+
+func (r *UserRepoImpl) GetModelPath(ctx context.Context, modelID int64) (string, error) {
+	var row struct{ Path string }
+	if err := r.data.Gorm.WithContext(ctx).
+		Table("pet_models").
+		Select("path").
+		Where("id=?", modelID).
+		Scan(&row).Error; err != nil {
+		return "", err
+	}
+	return row.Path, nil
 }

@@ -38,7 +38,7 @@ type AuthServiceClient interface {
 	// 返回 user_id 与 JWT token；expires_in 为 token 的有效期（秒）
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
 	// 重新登录/校验当前登录态
-	// 说明：服务端从请求头读取 JWT 校验有效性，入参为空。
+	// 说明：服务端从请求头读取 JWT 校验有效性，入参可为空即可。
 	Relogin(ctx context.Context, in *ReloginRequest, opts ...grpc.CallOption) (*ReloginReply, error)
 	// 获取当前登录用户信息（从 JWT 中获取 user_id）
 	GetUserInfo(ctx context.Context, in *GetUserInfoRequest, opts ...grpc.CallOption) (*GetUserInfoReply, error)
@@ -107,7 +107,7 @@ type AuthServiceServer interface {
 	// 返回 user_id 与 JWT token；expires_in 为 token 的有效期（秒）
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	// 重新登录/校验当前登录态
-	// 说明：服务端从请求头读取 JWT 校验有效性，入参为空。
+	// 说明：服务端从请求头读取 JWT 校验有效性，入参可为空即可。
 	Relogin(context.Context, *ReloginRequest) (*ReloginReply, error)
 	// 获取当前登录用户信息（从 JWT 中获取 user_id）
 	GetUserInfo(context.Context, *GetUserInfoRequest) (*GetUserInfoReply, error)

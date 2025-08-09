@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 	"time"
 
 	avatv1 "pet-angel/api/avatar/v1"
+	"pet-angel/internal/ai"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
 	jwtutil "pet-angel/internal/util/jwt"
@@ -106,6 +109,65 @@ func (s *AvatarService) Chat(ctx context.Context, in *avatv1.ChatRequest) (*avat
 		Content:   msg.Content,
 		CreatedAt: msg.CreatedAt.Format("2006-01-02 15:04:05"),
 	}, nil
+}
+
+// ChatStreamHTTP 提供原生 HTTP SSE 处理器，便于在 server 中注册到指定路由
+func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		// 鉴权
+		authHeader := r.Header.Get("Authorization")
+		tok, err := jwtutil.FromAuthHeader(authHeader)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		claims, err := jwtutil.Parse(s.jwtSecret, tok)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		var body struct {
+			Content string `json:"content"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		// 先保存用户消息
+		if _, err := s.uc.SaveUserMessage(r.Context(), claims.UserID, body.Content); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		flusher, _ := w.(http.Flusher)
+		client := ai.Default()
+		if client == nil {
+			client = ai.NewClient(ai.Config{})
+		}
+		system := "你是一个治愈系的宠物数字伙伴，以第一人称‘我’的口吻，温柔简短地回复。"
+		var full string
+		_, err = client.Stream(r.Context(), system, body.Content, func(delta string) error {
+			full += delta
+			_, _ = w.Write([]byte("data: " + delta + "\n\n"))
+			if flusher != nil {
+				flusher.Flush()
+			}
+			return nil
+		})
+		if err == nil && full != "" {
+			_, _ = s.uc.SaveAIMessage(r.Context(), claims.UserID, full)
+		}
+		_, _ = w.Write([]byte("data: [DONE]\n\n"))
+		if flusher != nil {
+			flusher.Flush()
+		}
+	}
 }
 
 // userIDFromCtx 从请求头解析 JWT 获取 user_id

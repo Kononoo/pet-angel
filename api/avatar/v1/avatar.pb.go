@@ -24,13 +24,19 @@ const (
 
 // 宠物模型
 type PetModel struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                // 模型ID
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                             // 模型名称
-	Path          string                 `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`                             // 模型资源URL（MinIO）
-	ModelType     int32                  `protobuf:"varint,4,opt,name=model_type,json=modelType,proto3" json:"model_type,omitempty"` // 0=猫 1=狗
-	IsDefault     bool                   `protobuf:"varint,5,opt,name=is_default,json=isDefault,proto3" json:"is_default,omitempty"` // 是否默认
-	SortOrder     int32                  `protobuf:"varint,6,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"` // 排序序号
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 模型ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 模型名称
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// 模型资源URL（MinIO）
+	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	// 模型类型：0=猫 1=狗
+	ModelType int32 `protobuf:"varint,4,opt,name=model_type,json=modelType,proto3" json:"model_type,omitempty"`
+	// 是否默认
+	IsDefault bool `protobuf:"varint,5,opt,name=is_default,json=isDefault,proto3" json:"is_default,omitempty"`
+	// 排序序号（数值越小越靠前）
+	SortOrder     int32 `protobuf:"varint,6,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -144,8 +150,9 @@ func (*GetModelsRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetModelsReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Models        []*PetModel            `protobuf:"bytes,1,rep,name=models,proto3" json:"models,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 模型列表
+	Models        []*PetModel `protobuf:"bytes,1,rep,name=models,proto3" json:"models,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -189,8 +196,9 @@ func (x *GetModelsReply) GetModels() []*PetModel {
 
 // 设置当前模型
 type SetPetModelRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ModelId       int64                  `protobuf:"varint,1,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 目标模型ID
+	ModelId       int64 `protobuf:"varint,1,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -233,8 +241,9 @@ func (x *SetPetModelRequest) GetModelId() int64 {
 }
 
 type SetPetModelReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否成功
+	Success       bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -278,12 +287,17 @@ func (x *SetPetModelReply) GetSuccess() bool {
 
 // 道具
 type Item struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                             // 道具ID
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                          // 道具名称
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`            // 描述文案
-	IconPath      string                 `protobuf:"bytes,4,opt,name=icon_path,json=iconPath,proto3" json:"icon_path,omitempty"`  // 图标URL
-	CoinCost      int32                  `protobuf:"varint,5,opt,name=coin_cost,json=coinCost,proto3" json:"coin_cost,omitempty"` // 消耗金币
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 道具ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 道具名称
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// 描述文案
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	// 图标URL
+	IconPath string `protobuf:"bytes,4,opt,name=icon_path,json=iconPath,proto3" json:"icon_path,omitempty"`
+	// 消耗金币
+	CoinCost      int32 `protobuf:"varint,5,opt,name=coin_cost,json=coinCost,proto3" json:"coin_cost,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -390,8 +404,9 @@ func (*GetItemsRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetItemsReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Items         []*Item                `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 道具列表
+	Items         []*Item `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -435,8 +450,9 @@ func (x *GetItemsReply) GetItems() []*Item {
 
 // 使用道具
 type UseItemRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ItemId        int64                  `protobuf:"varint,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 道具ID
+	ItemId        int64 `protobuf:"varint,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -479,9 +495,11 @@ func (x *UseItemRequest) GetItemId() int64 {
 }
 
 type UseItemReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否成功
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// 使用结果与提示（例如：喂食成功）
+	Message       string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -532,8 +550,9 @@ func (x *UseItemReply) GetMessage() string {
 
 // 聊天
 type ChatRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 用户输入的文本内容
+	Content       string `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -576,13 +595,19 @@ func (x *ChatRequest) GetContent() string {
 }
 
 type ChatReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MessageId     int64                  `protobuf:"varint,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`         // 本次用户消息的ID
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`                               // 本次用户消息内容回显
-	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`          // 发送时间 YYYY-MM-DD HH:MM:SS
-	AiMessageId   int64                  `protobuf:"varint,4,opt,name=ai_message_id,json=aiMessageId,proto3" json:"ai_message_id,omitempty"` // （可选）AI 回复的消息ID
-	AiContent     string                 `protobuf:"bytes,5,opt,name=ai_content,json=aiContent,proto3" json:"ai_content,omitempty"`          // （可选）AI 回复的文本
-	AiCreatedAt   string                 `protobuf:"bytes,6,opt,name=ai_created_at,json=aiCreatedAt,proto3" json:"ai_created_at,omitempty"`  // （可选）AI 回复时间
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本次用户消息的ID
+	MessageId int64 `protobuf:"varint,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// 本次用户消息内容回显
+	Content string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	// 发送时间 YYYY-MM-DD HH:MM:SS
+	CreatedAt string `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// （可选）AI 回复的消息ID
+	AiMessageId int64 `protobuf:"varint,4,opt,name=ai_message_id,json=aiMessageId,proto3" json:"ai_message_id,omitempty"`
+	// （可选）AI 回复的文本
+	AiContent string `protobuf:"bytes,5,opt,name=ai_content,json=aiContent,proto3" json:"ai_content,omitempty"`
+	// （可选）AI 回复时间 YYYY-MM-DD HH:MM:SS
+	AiCreatedAt   string `protobuf:"bytes,6,opt,name=ai_created_at,json=aiCreatedAt,proto3" json:"ai_created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -706,13 +731,15 @@ const file_avatar_v1_avatar_proto_rawDesc = "" +
 	"\rai_message_id\x18\x04 \x01(\x03R\vaiMessageId\x12\x1d\n" +
 	"\n" +
 	"ai_content\x18\x05 \x01(\tR\taiContent\x12\"\n" +
-	"\rai_created_at\x18\x06 \x01(\tR\vaiCreatedAt2\x8c\x04\n" +
+	"\rai_created_at\x18\x06 \x01(\tR\vaiCreatedAt2\xf3\x04\n" +
 	"\rAvatarService\x12f\n" +
 	"\tGetModels\x12\x1f.api.avatar.v1.GetModelsRequest\x1a\x1d.api.avatar.v1.GetModelsReply\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/avatar/models\x12n\n" +
 	"\vSetPetModel\x12!.api.avatar.v1.SetPetModelRequest\x1a\x1f.api.avatar.v1.SetPetModelReply\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/avatar/model\x12b\n" +
 	"\bGetItems\x12\x1e.api.avatar.v1.GetItemsRequest\x1a\x1c.api.avatar.v1.GetItemsReply\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/avatar/items\x12e\n" +
 	"\aUseItem\x12\x1d.api.avatar.v1.UseItemRequest\x1a\x1b.api.avatar.v1.UseItemReply\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/avatar/use-item\x12X\n" +
-	"\x04Chat\x12\x1a.api.avatar.v1.ChatRequest\x1a\x18.api.avatar.v1.ChatReply\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/avatar/chatB\x1cZ\x1apet-angel/api/avatar/v1;v1b\x06proto3"
+	"\x04Chat\x12\x1a.api.avatar.v1.ChatRequest\x1a\x18.api.avatar.v1.ChatReply\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/avatar/chat\x12e\n" +
+	"\n" +
+	"ChatStream\x12\x1a.api.avatar.v1.ChatRequest\x1a\x18.api.avatar.v1.ChatReply\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/v1/avatar/chat/streamB\x1cZ\x1apet-angel/api/avatar/v1;v1b\x06proto3"
 
 var (
 	file_avatar_v1_avatar_proto_rawDescOnce sync.Once
@@ -749,13 +776,15 @@ var file_avatar_v1_avatar_proto_depIdxs = []int32{
 	6,  // 4: api.avatar.v1.AvatarService.GetItems:input_type -> api.avatar.v1.GetItemsRequest
 	8,  // 5: api.avatar.v1.AvatarService.UseItem:input_type -> api.avatar.v1.UseItemRequest
 	10, // 6: api.avatar.v1.AvatarService.Chat:input_type -> api.avatar.v1.ChatRequest
-	2,  // 7: api.avatar.v1.AvatarService.GetModels:output_type -> api.avatar.v1.GetModelsReply
-	4,  // 8: api.avatar.v1.AvatarService.SetPetModel:output_type -> api.avatar.v1.SetPetModelReply
-	7,  // 9: api.avatar.v1.AvatarService.GetItems:output_type -> api.avatar.v1.GetItemsReply
-	9,  // 10: api.avatar.v1.AvatarService.UseItem:output_type -> api.avatar.v1.UseItemReply
-	11, // 11: api.avatar.v1.AvatarService.Chat:output_type -> api.avatar.v1.ChatReply
-	7,  // [7:12] is the sub-list for method output_type
-	2,  // [2:7] is the sub-list for method input_type
+	10, // 7: api.avatar.v1.AvatarService.ChatStream:input_type -> api.avatar.v1.ChatRequest
+	2,  // 8: api.avatar.v1.AvatarService.GetModels:output_type -> api.avatar.v1.GetModelsReply
+	4,  // 9: api.avatar.v1.AvatarService.SetPetModel:output_type -> api.avatar.v1.SetPetModelReply
+	7,  // 10: api.avatar.v1.AvatarService.GetItems:output_type -> api.avatar.v1.GetItemsReply
+	9,  // 11: api.avatar.v1.AvatarService.UseItem:output_type -> api.avatar.v1.UseItemReply
+	11, // 12: api.avatar.v1.AvatarService.Chat:output_type -> api.avatar.v1.ChatReply
+	11, // 13: api.avatar.v1.AvatarService.ChatStream:output_type -> api.avatar.v1.ChatReply
+	8,  // [8:14] is the sub-list for method output_type
+	2,  // [2:8] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name

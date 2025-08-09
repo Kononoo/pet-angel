@@ -24,9 +24,11 @@ const (
 
 // 帖子分类
 type Category struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 分类ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 分类名称
+	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -112,8 +114,9 @@ func (*GetCategoriesRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetCategoriesReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Categories    []*Category            `protobuf:"bytes,1,rep,name=categories,proto3" json:"categories,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 分类列表
+	Categories    []*Category `protobuf:"bytes,1,rep,name=categories,proto3" json:"categories,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -157,11 +160,15 @@ func (x *GetCategoriesReply) GetCategories() []*Category {
 
 // 用户简要信息（用于帖子/评论作者）
 type UserBrief struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Nickname      string                 `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
-	Avatar        string                 `protobuf:"bytes,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
-	IsFollowed    bool                   `protobuf:"varint,4,opt,name=is_followed,json=isFollowed,proto3" json:"is_followed,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 用户ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 昵称
+	Nickname string `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	// 头像URL
+	Avatar string `protobuf:"bytes,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	// 当前登录用户是否已关注该作者
+	IsFollowed    bool `protobuf:"varint,4,opt,name=is_followed,json=isFollowed,proto3" json:"is_followed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -226,23 +233,39 @@ func (x *UserBrief) GetIsFollowed() bool {
 
 // 帖子实体
 type Post struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                          // 帖子ID
-	User          *UserBrief             `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`                                       // 作者信息
-	CategoryId    int64                  `protobuf:"varint,3,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`        // 分类ID
-	Title         string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`                                     // 标题
-	Content       string                 `protobuf:"bytes,5,opt,name=content,proto3" json:"content,omitempty"`                                 // 文本内容
-	PostType      int32                  `protobuf:"varint,6,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`              // 帖子类型 0图文 1视频
-	ImageUrls     []string               `protobuf:"bytes,7,rep,name=image_urls,json=imageUrls,proto3" json:"image_urls,omitempty"`            // 图片URL列表（图文）
-	VideoUrl      string                 `protobuf:"bytes,8,opt,name=video_url,json=videoUrl,proto3" json:"video_url,omitempty"`               // 视频URL（视频）
-	CoverUrl      string                 `protobuf:"bytes,9,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`               // 封面URL
-	Locate        string                 `protobuf:"bytes,10,opt,name=locate,proto3" json:"locate,omitempty"`                                  // 位置文本
-	Tags          []string               `protobuf:"bytes,11,rep,name=tags,proto3" json:"tags,omitempty"`                                      // 标签
-	LikedCount    int32                  `protobuf:"varint,12,opt,name=liked_count,json=likedCount,proto3" json:"liked_count,omitempty"`       // 点赞数
-	CommentCount  int32                  `protobuf:"varint,13,opt,name=comment_count,json=commentCount,proto3" json:"comment_count,omitempty"` // 评论数
-	CreatedAt     string                 `protobuf:"bytes,14,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`           // 创建时间 YYYY-MM-DD HH:MM:SS
-	IsLiked       bool                   `protobuf:"varint,15,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`                // 当前用户是否已点赞
-	IsPrivate     bool                   `protobuf:"varint,16,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`          // 是否私密
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 帖子ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 作者信息
+	User *UserBrief `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	// 分类ID
+	CategoryId int64 `protobuf:"varint,3,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	// 标题
+	Title string `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	// 文本内容
+	Content string `protobuf:"bytes,5,opt,name=content,proto3" json:"content,omitempty"`
+	// 帖子类型：0=图文 1=视频（与发布时保持一致）
+	PostType int32 `protobuf:"varint,6,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`
+	// 图片URL列表（图文）
+	ImageUrls []string `protobuf:"bytes,7,rep,name=image_urls,json=imageUrls,proto3" json:"image_urls,omitempty"`
+	// 视频URL（视频）
+	VideoUrl string `protobuf:"bytes,8,opt,name=video_url,json=videoUrl,proto3" json:"video_url,omitempty"`
+	// 封面URL（可选，用于列表首帧展示）
+	CoverUrl string `protobuf:"bytes,9,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
+	// 位置文本（可选，例如城市/商圈）
+	Locate string `protobuf:"bytes,10,opt,name=locate,proto3" json:"locate,omitempty"`
+	// 标签（可选，最多若干个，按业务约束）
+	Tags []string `protobuf:"bytes,11,rep,name=tags,proto3" json:"tags,omitempty"`
+	// 点赞数
+	LikedCount int32 `protobuf:"varint,12,opt,name=liked_count,json=likedCount,proto3" json:"liked_count,omitempty"`
+	// 评论数
+	CommentCount int32 `protobuf:"varint,13,opt,name=comment_count,json=commentCount,proto3" json:"comment_count,omitempty"`
+	// 创建时间 YYYY-MM-DD HH:MM:SS
+	CreatedAt string `protobuf:"bytes,14,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// 当前用户是否已点赞
+	IsLiked bool `protobuf:"varint,15,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`
+	// 是否私密（私密仅自己可见）
+	IsPrivate     bool `protobuf:"varint,16,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -391,12 +414,17 @@ func (x *Post) GetIsPrivate() bool {
 
 // 帖子列表查询参数
 type GetPostListRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CategoryId    int64                  `protobuf:"varint,1,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"` // 分类过滤（可空）
-	PostType      int32                  `protobuf:"varint,2,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`       // -1全部 0图文 1视频（默认-1）
-	Sort          string                 `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`                                // created|liked
-	Page          int32                  `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`                               // 页码，从1开始
-	PageSize      int32                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`       // 每页条数（默认20，最大100）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 分类过滤（可空，为0或缺省则为全部分类）
+	CategoryId int64 `protobuf:"varint,1,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	// 帖子类型过滤：-1=全部 0=图文 1=视频（默认-1）
+	PostType int32 `protobuf:"varint,2,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`
+	// 排序字段：created=按创建时间倒序、liked=按点赞数倒序（默认created）
+	Sort string `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
+	// 页码，从1开始（默认1）
+	Page int32 `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	// 每页条数（默认20，最大100；超出按100处理）
+	PageSize      int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -467,9 +495,11 @@ func (x *GetPostListRequest) GetPageSize() int32 {
 }
 
 type GetPostListReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Total         int32                  `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
-	List          []*Post                `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 结果总条数
+	Total int32 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// 当前页帖子列表
+	List          []*Post `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -520,8 +550,9 @@ func (x *GetPostListReply) GetList() []*Post {
 
 // 帖子详情
 type GetPostDetailRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 帖子ID
+	PostId        int64 `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -564,8 +595,9 @@ func (x *GetPostDetailRequest) GetPostId() int64 {
 }
 
 type GetPostDetailReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Post          *Post                  `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 帖子详情
+	Post          *Post `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -609,17 +641,27 @@ func (x *GetPostDetailReply) GetPost() *Post {
 
 // 发帖
 type CreatePostRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CategoryId    int64                  `protobuf:"varint,1,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"` // 分类ID（可空）
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`                              // 标题
-	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                          // 文本内容
-	PostType      int32                  `protobuf:"varint,4,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`       // 0图文 1视频
-	ImageUrls     []string               `protobuf:"bytes,5,rep,name=image_urls,json=imageUrls,proto3" json:"image_urls,omitempty"`     // 图文：图片URL列表
-	VideoUrl      string                 `protobuf:"bytes,6,opt,name=video_url,json=videoUrl,proto3" json:"video_url,omitempty"`        // 视频：视频URL
-	CoverUrl      string                 `protobuf:"bytes,7,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`        // 封面URL
-	Locate        string                 `protobuf:"bytes,8,opt,name=locate,proto3" json:"locate,omitempty"`                            // 位置
-	Tags          []string               `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`                                // 标签
-	IsPrivate     bool                   `protobuf:"varint,10,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`   // 是否私密
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 分类ID（可空，为0或缺省则不归类）
+	CategoryId int64 `protobuf:"varint,1,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	// 标题（可选，建议<=50字）
+	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	// 文本内容（当 post_type=0 时必填，建议<=1000字）
+	Content string `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	// 帖子类型：0=图文 1=视频（默认0）
+	PostType int32 `protobuf:"varint,4,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`
+	// 图文贴：图片URL列表（最多9张，至少1张）
+	ImageUrls []string `protobuf:"bytes,5,rep,name=image_urls,json=imageUrls,proto3" json:"image_urls,omitempty"`
+	// 视频贴：视频URL（post_type=1 时必填）
+	VideoUrl string `protobuf:"bytes,6,opt,name=video_url,json=videoUrl,proto3" json:"video_url,omitempty"`
+	// 封面URL（可选，用于列表展示）
+	CoverUrl string `protobuf:"bytes,7,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
+	// 位置（可选）
+	Locate string `protobuf:"bytes,8,opt,name=locate,proto3" json:"locate,omitempty"`
+	// 标签（可选）
+	Tags []string `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`
+	// 是否私密（默认false）
+	IsPrivate     bool `protobuf:"varint,10,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -725,8 +767,9 @@ func (x *CreatePostRequest) GetIsPrivate() bool {
 }
 
 type CreatePostReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 新帖ID
+	Id            int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -770,8 +813,9 @@ func (x *CreatePostReply) GetId() int64 {
 
 // 帖子点赞
 type LikePostRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 帖子ID
+	PostId        int64 `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -814,8 +858,9 @@ func (x *LikePostRequest) GetPostId() int64 {
 }
 
 type LikePostReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否成功
+	Success       bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -858,8 +903,9 @@ func (x *LikePostReply) GetSuccess() bool {
 }
 
 type UnlikePostRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 帖子ID
+	PostId        int64 `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -902,8 +948,9 @@ func (x *UnlikePostRequest) GetPostId() int64 {
 }
 
 type UnlikePostReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否成功
+	Success       bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -947,13 +994,19 @@ func (x *UnlikePostReply) GetSuccess() bool {
 
 // 评论
 type Comment struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                   // 评论ID
-	User          *UserBrief             `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`                                // 评论者
-	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                          // 内容
-	LikedCount    int32                  `protobuf:"varint,4,opt,name=liked_count,json=likedCount,proto3" json:"liked_count,omitempty"` // 点赞数
-	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`     // 创建时间
-	IsLiked       bool                   `protobuf:"varint,6,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`          // 当前用户是否点赞
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 评论ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 评论者
+	User *UserBrief `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	// 内容（建议<=500字）
+	Content string `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	// 点赞数
+	LikedCount int32 `protobuf:"varint,4,opt,name=liked_count,json=likedCount,proto3" json:"liked_count,omitempty"`
+	// 创建时间 YYYY-MM-DD HH:MM:SS
+	CreatedAt string `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// 当前用户是否点赞
+	IsLiked       bool `protobuf:"varint,6,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1031,10 +1084,13 @@ func (x *Comment) GetIsLiked() bool {
 }
 
 type GetCommentListRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
-	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 帖子ID
+	PostId int64 `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	// 页码，从1开始（默认1）
+	Page int32 `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	// 每页条数（默认20，最大100）
+	PageSize      int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1091,9 +1147,11 @@ func (x *GetCommentListRequest) GetPageSize() int32 {
 }
 
 type GetCommentListReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Total         int32                  `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
-	List          []*Comment             `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 结果总条数
+	Total int32 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// 当前页评论列表
+	List          []*Comment `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1144,8 +1202,8 @@ func (x *GetCommentListReply) GetList() []*Comment {
 
 type CreateCommentRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"` // 帖子ID
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`              // 评论内容（必填，建议<=500字）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1195,8 +1253,9 @@ func (x *CreateCommentRequest) GetContent() string {
 }
 
 type CreateCommentReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 新评论ID
+	Id            int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1239,8 +1298,9 @@ func (x *CreateCommentReply) GetId() int64 {
 }
 
 type LikeCommentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CommentId     int64                  `protobuf:"varint,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 评论ID
+	CommentId     int64 `protobuf:"varint,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1283,8 +1343,9 @@ func (x *LikeCommentRequest) GetCommentId() int64 {
 }
 
 type LikeCommentReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否成功
+	Success       bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1327,8 +1388,9 @@ func (x *LikeCommentReply) GetSuccess() bool {
 }
 
 type UnlikeCommentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CommentId     int64                  `protobuf:"varint,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 评论ID
+	CommentId     int64 `protobuf:"varint,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1371,8 +1433,9 @@ func (x *UnlikeCommentRequest) GetCommentId() int64 {
 }
 
 type UnlikeCommentReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否成功
+	Success       bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

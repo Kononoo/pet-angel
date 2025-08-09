@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"pet-angel/internal/biz"
+
+	"gorm.io/gorm/clause"
 )
 
 // 表模型定义（仅含社区模块用到的字段）
@@ -49,10 +51,9 @@ type CommentModel struct {
 func (CommentModel) TableName() string { return "comments" }
 
 type LikeModel struct {
-	ID         int64 `gorm:"column:id;primaryKey"`
-	UserID     int64 `gorm:"column:user_id"`
-	TargetType int32 `gorm:"column:target_type"` // 0帖子 1评论
-	TargetID   int64 `gorm:"column:target_id"`
+	UserID     int64 `gorm:"column:user_id;primaryKey"`
+	TargetType int32 `gorm:"column:target_type;primaryKey"` // 0帖子 1评论
+	TargetID   int64 `gorm:"column:target_id;primaryKey"`
 }
 
 func (LikeModel) TableName() string { return "likes" }
@@ -308,28 +309,35 @@ func (r *CommunityRepoImpl) LikePost(ctx context.Context, userID, postID int64) 
 	if r.data.Gorm == nil {
 		return nil
 	}
-	_ = r.data.Gorm.WithContext(ctx).
-		Where("user_id=? AND target_type=0 AND target_id=?", userID, postID).
-		Delete(&LikeModel{}).Error
-	if err := r.data.Gorm.WithContext(ctx).
-		Create(&LikeModel{UserID: userID, TargetType: 0, TargetID: postID}).Error; err != nil {
-		return err
+	// 幂等：仅当插入发生时才自增计数
+	tx := r.data.Gorm.WithContext(ctx).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(&LikeModel{UserID: userID, TargetType: 0, TargetID: postID})
+	if tx.Error != nil {
+		return tx.Error
 	}
-	return r.data.Gorm.WithContext(ctx).
-		Exec("UPDATE posts SET liked_count=liked_count+1 WHERE id=?", postID).Error
+	if tx.RowsAffected > 0 {
+		return r.data.Gorm.WithContext(ctx).
+			Exec("UPDATE posts SET liked_count=liked_count+1 WHERE id=?", postID).Error
+	}
+	return nil
 }
 
 func (r *CommunityRepoImpl) UnlikePost(ctx context.Context, userID, postID int64) error {
 	if r.data.Gorm == nil {
 		return nil
 	}
-	if err := r.data.Gorm.WithContext(ctx).
+	del := r.data.Gorm.WithContext(ctx).
 		Where("user_id=? AND target_type=0 AND target_id=?", userID, postID).
-		Delete(&LikeModel{}).Error; err != nil {
-		return err
+		Delete(&LikeModel{})
+	if del.Error != nil {
+		return del.Error
 	}
-	return r.data.Gorm.WithContext(ctx).
-		Exec("UPDATE posts SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", postID).Error
+	if del.RowsAffected > 0 {
+		return r.data.Gorm.WithContext(ctx).
+			Exec("UPDATE posts SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", postID).Error
+	}
+	return nil
 }
 
 func (r *CommunityRepoImpl) ListComments(ctx context.Context, viewerID, postID int64, page, pageSize int32) (int32, []*biz.CommunityComment, error) {
@@ -426,26 +434,33 @@ func (r *CommunityRepoImpl) LikeComment(ctx context.Context, userID, commentID i
 	if r.data.Gorm == nil {
 		return nil
 	}
-	_ = r.data.Gorm.WithContext(ctx).
-		Where("user_id=? AND target_type=1 AND target_id=?", userID, commentID).
-		Delete(&LikeModel{}).Error
-	if err := r.data.Gorm.WithContext(ctx).
-		Create(&LikeModel{UserID: userID, TargetType: 1, TargetID: commentID}).Error; err != nil {
-		return err
+	// 幂等：仅当插入发生时才自增
+	tx := r.data.Gorm.WithContext(ctx).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(&LikeModel{UserID: userID, TargetType: 1, TargetID: commentID})
+	if tx.Error != nil {
+		return tx.Error
 	}
-	return r.data.Gorm.WithContext(ctx).
-		Exec("UPDATE comments SET liked_count=liked_count+1 WHERE id=?", commentID).Error
+	if tx.RowsAffected > 0 {
+		return r.data.Gorm.WithContext(ctx).
+			Exec("UPDATE comments SET liked_count=liked_count+1 WHERE id=?", commentID).Error
+	}
+	return nil
 }
 
 func (r *CommunityRepoImpl) UnlikeComment(ctx context.Context, userID, commentID int64) error {
 	if r.data.Gorm == nil {
 		return nil
 	}
-	if err := r.data.Gorm.WithContext(ctx).
+	del := r.data.Gorm.WithContext(ctx).
 		Where("user_id=? AND target_type=1 AND target_id=?", userID, commentID).
-		Delete(&LikeModel{}).Error; err != nil {
-		return err
+		Delete(&LikeModel{})
+	if del.Error != nil {
+		return del.Error
 	}
-	return r.data.Gorm.WithContext(ctx).
-		Exec("UPDATE comments SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", commentID).Error
+	if del.RowsAffected > 0 {
+		return r.data.Gorm.WithContext(ctx).
+			Exec("UPDATE comments SET liked_count=GREATEST(liked_count-1,0) WHERE id=?", commentID).Error
+	}
+	return nil
 }

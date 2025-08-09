@@ -25,9 +25,9 @@ const (
 // 登录请求
 type LoginRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 用户名（或手机号/邮箱），由前端提供
+	// 用户名（或手机号/邮箱）
 	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	// 密码（明文或加密传输，建议 HTTPS）
+	// 密码（建议 HTTPS 传输）
 	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -263,21 +263,35 @@ func (*GetUserInfoRequest) Descriptor() ([]byte, []int) {
 
 // 获取用户信息响应
 type GetUserInfoReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`          // 用户ID
-	Nickname      string                 `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`                     // 昵称
-	Avatar        string                 `protobuf:"bytes,3,opt,name=avatar,proto3" json:"avatar,omitempty"`                         // 头像URL
-	ModelId       int64                  `protobuf:"varint,4,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`       // 当前宠物模型ID
-	PetName       string                 `protobuf:"bytes,5,opt,name=pet_name,json=petName,proto3" json:"pet_name,omitempty"`        // 宠物名称
-	PetAvatar     string                 `protobuf:"bytes,6,opt,name=pet_avatar,json=petAvatar,proto3" json:"pet_avatar,omitempty"`  // 宠物头像URL
-	PetSex        int32                  `protobuf:"varint,7,opt,name=pet_sex,json=petSex,proto3" json:"pet_sex,omitempty"`          // 宠物性别 0未知/1男/2女
-	Kind          string                 `protobuf:"bytes,8,opt,name=kind,proto3" json:"kind,omitempty"`                             // 宠物品类
-	Weight        int32                  `protobuf:"varint,9,opt,name=weight,proto3" json:"weight,omitempty"`                        // 体重（kg）
-	Hobby         string                 `protobuf:"bytes,10,opt,name=hobby,proto3" json:"hobby,omitempty"`                          // 爱好
-	Description   string                 `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"`              // 个人/宠物简介
-	Coins         int32                  `protobuf:"varint,12,opt,name=coins,proto3" json:"coins,omitempty"`                         // 金币余额
-	CreatedAt     string                 `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` // 创建时间 YYYY-MM-DD HH:MM:SS
-	ModelUrl      string                 `protobuf:"bytes,14,opt,name=model_url,json=modelUrl,proto3" json:"model_url,omitempty"`    // 当前宠物模型URL（与 pet_models.path 一致）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 用户ID
+	UserId int64 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// 昵称
+	Nickname string `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	// 头像URL
+	Avatar string `protobuf:"bytes,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	// 当前宠物模型ID（未设置则为0）
+	ModelId int64 `protobuf:"varint,4,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`
+	// 宠物名称
+	PetName string `protobuf:"bytes,5,opt,name=pet_name,json=petName,proto3" json:"pet_name,omitempty"`
+	// 宠物头像URL
+	PetAvatar string `protobuf:"bytes,6,opt,name=pet_avatar,json=petAvatar,proto3" json:"pet_avatar,omitempty"`
+	// 宠物性别 0未知/1男/2女
+	PetSex int32 `protobuf:"varint,7,opt,name=pet_sex,json=petSex,proto3" json:"pet_sex,omitempty"`
+	// 宠物品类
+	Kind string `protobuf:"bytes,8,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 体重（kg）
+	Weight int32 `protobuf:"varint,9,opt,name=weight,proto3" json:"weight,omitempty"`
+	// 爱好
+	Hobby string `protobuf:"bytes,10,opt,name=hobby,proto3" json:"hobby,omitempty"`
+	// 个人/宠物简介
+	Description string `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"`
+	// 金币余额
+	Coins int32 `protobuf:"varint,12,opt,name=coins,proto3" json:"coins,omitempty"`
+	// 创建时间 YYYY-MM-DD HH:MM:SS
+	CreatedAt string `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// 当前宠物模型URL（与 pet_models.path 一致，未设置则为空）
+	ModelUrl      string `protobuf:"bytes,14,opt,name=model_url,json=modelUrl,proto3" json:"model_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -412,17 +426,27 @@ func (x *GetUserInfoReply) GetModelUrl() string {
 
 // 更新用户信息请求（仅包含需要更新的字段）
 type UpdateUserInfoRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Nickname      string                 `protobuf:"bytes,1,opt,name=nickname,proto3" json:"nickname,omitempty"`                    // 昵称
-	Avatar        string                 `protobuf:"bytes,2,opt,name=avatar,proto3" json:"avatar,omitempty"`                        // 头像URL
-	ModelId       int64                  `protobuf:"varint,3,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`      // 当前宠物模型ID
-	PetName       string                 `protobuf:"bytes,4,opt,name=pet_name,json=petName,proto3" json:"pet_name,omitempty"`       // 宠物名称
-	PetAvatar     string                 `protobuf:"bytes,5,opt,name=pet_avatar,json=petAvatar,proto3" json:"pet_avatar,omitempty"` // 宠物头像URL
-	PetSex        int32                  `protobuf:"varint,6,opt,name=pet_sex,json=petSex,proto3" json:"pet_sex,omitempty"`         // 宠物性别 0未知/1男/2女
-	Kind          string                 `protobuf:"bytes,7,opt,name=kind,proto3" json:"kind,omitempty"`                            // 宠物品类
-	Weight        int32                  `protobuf:"varint,8,opt,name=weight,proto3" json:"weight,omitempty"`                       // 体重（kg）
-	Hobby         string                 `protobuf:"bytes,9,opt,name=hobby,proto3" json:"hobby,omitempty"`                          // 爱好
-	Description   string                 `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`             // 个人/宠物简介
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 昵称
+	Nickname string `protobuf:"bytes,1,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	// 头像URL
+	Avatar string `protobuf:"bytes,2,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	// 当前宠物模型ID
+	ModelId int64 `protobuf:"varint,3,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`
+	// 宠物名称
+	PetName string `protobuf:"bytes,4,opt,name=pet_name,json=petName,proto3" json:"pet_name,omitempty"`
+	// 宠物头像URL
+	PetAvatar string `protobuf:"bytes,5,opt,name=pet_avatar,json=petAvatar,proto3" json:"pet_avatar,omitempty"`
+	// 宠物性别 0未知/1男/2女
+	PetSex int32 `protobuf:"varint,6,opt,name=pet_sex,json=petSex,proto3" json:"pet_sex,omitempty"`
+	// 宠物品类
+	Kind string `protobuf:"bytes,7,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 体重（kg）
+	Weight int32 `protobuf:"varint,8,opt,name=weight,proto3" json:"weight,omitempty"`
+	// 爱好（如：散步、逗猫棒）
+	Hobby string `protobuf:"bytes,9,opt,name=hobby,proto3" json:"hobby,omitempty"`
+	// 个人/宠物简介
+	Description   string `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

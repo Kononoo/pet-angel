@@ -20,6 +20,7 @@ var _ = binding.EncodeURL
 const _ = http.SupportPackageIsVersion1
 
 const OperationAvatarServiceChat = "/api.avatar.v1.AvatarService/Chat"
+const OperationAvatarServiceChatStream = "/api.avatar.v1.AvatarService/ChatStream"
 const OperationAvatarServiceGetItems = "/api.avatar.v1.AvatarService/GetItems"
 const OperationAvatarServiceGetModels = "/api.avatar.v1.AvatarService/GetModels"
 const OperationAvatarServiceSetPetModel = "/api.avatar.v1.AvatarService/SetPetModel"
@@ -28,6 +29,9 @@ const OperationAvatarServiceUseItem = "/api.avatar.v1.AvatarService/UseItem"
 type AvatarServiceHTTPServer interface {
 	// Chat 发送一条聊天消息给 AI（同步返回本条消息；可选返回AI的即时回复）
 	Chat(context.Context, *ChatRequest) (*ChatReply, error)
+	// ChatStream 流式聊天（服务端以 SSE 持续返回 AI 回复片段；前端逐段渲染）
+	// 备注：本接口仅支持 HTTP，GRPC 下可另行定义 bidi-stream。
+	ChatStream(context.Context, *ChatRequest) (*ChatReply, error)
 	// GetItems 获取道具列表
 	GetItems(context.Context, *GetItemsRequest) (*GetItemsReply, error)
 	// GetModels 获取可用的宠物模型列表
@@ -45,6 +49,7 @@ func RegisterAvatarServiceHTTPServer(s *http.Server, srv AvatarServiceHTTPServer
 	r.GET("/v1/avatar/items", _AvatarService_GetItems0_HTTP_Handler(srv))
 	r.POST("/v1/avatar/use-item", _AvatarService_UseItem0_HTTP_Handler(srv))
 	r.POST("/v1/avatar/chat", _AvatarService_Chat0_HTTP_Handler(srv))
+	r.POST("/v1/avatar/chat/stream", _AvatarService_ChatStream0_HTTP_Handler(srv))
 }
 
 func _AvatarService_GetModels0_HTTP_Handler(srv AvatarServiceHTTPServer) func(ctx http.Context) error {
@@ -151,8 +156,31 @@ func _AvatarService_Chat0_HTTP_Handler(srv AvatarServiceHTTPServer) func(ctx htt
 	}
 }
 
+func _AvatarService_ChatStream0_HTTP_Handler(srv AvatarServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ChatRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAvatarServiceChatStream)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ChatStream(ctx, req.(*ChatRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*ChatReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AvatarServiceHTTPClient interface {
 	Chat(ctx context.Context, req *ChatRequest, opts ...http.CallOption) (rsp *ChatReply, err error)
+	ChatStream(ctx context.Context, req *ChatRequest, opts ...http.CallOption) (rsp *ChatReply, err error)
 	GetItems(ctx context.Context, req *GetItemsRequest, opts ...http.CallOption) (rsp *GetItemsReply, err error)
 	GetModels(ctx context.Context, req *GetModelsRequest, opts ...http.CallOption) (rsp *GetModelsReply, err error)
 	SetPetModel(ctx context.Context, req *SetPetModelRequest, opts ...http.CallOption) (rsp *SetPetModelReply, err error)
@@ -172,6 +200,19 @@ func (c *AvatarServiceHTTPClientImpl) Chat(ctx context.Context, in *ChatRequest,
 	pattern := "/v1/avatar/chat"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationAvatarServiceChat))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AvatarServiceHTTPClientImpl) ChatStream(ctx context.Context, in *ChatRequest, opts ...http.CallOption) (*ChatReply, error) {
+	var out ChatReply
+	pattern := "/v1/avatar/chat/stream"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationAvatarServiceChatStream))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {

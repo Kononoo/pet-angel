@@ -26,6 +26,8 @@ type MessageRepo interface {
 	ListMessages(ctx context.Context, userID int64, onlyNotes bool, page, pageSize int32) (total int32, list []*Message, err error)
 	UnlockMessage(ctx context.Context, userID, messageID int64) (remainingCoins int32, msg *Message, err error)
 	GetMessageByID(ctx context.Context, userID, messageID int64) (*Message, error)
+	// 生成一条“AI 小纸条”（锁定），仅写库，不解锁
+	CreateLockedNote(ctx context.Context, userID int64, unlockCoins int32, content string) (int64, error)
 }
 
 // MessageUsecase 用例
@@ -57,4 +59,17 @@ func (uc *MessageUsecase) Unlock(ctx context.Context, userID, messageID int64) (
 		return 0, nil, err
 	}
 	return remaining, msg, nil
+}
+
+// CreateDailyNotes 由定时任务或手动触发：生成若干条锁定小纸条
+func (uc *MessageUsecase) CreateDailyNotes(ctx context.Context, userID int64, notes []struct {
+	Coins   int32
+	Content string
+}) error {
+	for _, n := range notes {
+		if _, err := uc.repo.CreateLockedNote(ctx, userID, n.Coins, n.Content); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -24,14 +24,21 @@ const (
 
 // 消息体
 type Message struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                      // 消息ID
-	Sender        int32                  `protobuf:"varint,2,opt,name=sender,proto3" json:"sender,omitempty"`                              // 发送方 0用户 1AI
-	MessageType   int32                  `protobuf:"varint,3,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"` // 0聊天 1小纸条
-	IsLocked      bool                   `protobuf:"varint,4,opt,name=is_locked,json=isLocked,proto3" json:"is_locked,omitempty"`          // 小纸条是否锁定
-	UnlockCoins   int32                  `protobuf:"varint,5,opt,name=unlock_coins,json=unlockCoins,proto3" json:"unlock_coins,omitempty"` // 小纸条解锁所需金币
-	Content       string                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`                             // 文本内容（锁定时可为空或返回占位）
-	CreatedAt     string                 `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`        // 创建时间 YYYY-MM-DD HH:MM:SS
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 消息ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 发送方：0=用户 1=AI
+	Sender int32 `protobuf:"varint,2,opt,name=sender,proto3" json:"sender,omitempty"`
+	// 消息类型：0=聊天 1=小纸条
+	MessageType int32 `protobuf:"varint,3,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"`
+	// 小纸条是否锁定
+	IsLocked bool `protobuf:"varint,4,opt,name=is_locked,json=isLocked,proto3" json:"is_locked,omitempty"`
+	// 小纸条解锁所需金币
+	UnlockCoins int32 `protobuf:"varint,5,opt,name=unlock_coins,json=unlockCoins,proto3" json:"unlock_coins,omitempty"`
+	// 文本内容（锁定时可为空或返回占位）
+	Content string `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`
+	// 创建时间 YYYY-MM-DD HH:MM:SS
+	CreatedAt     string `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,10 +124,13 @@ func (x *Message) GetCreatedAt() string {
 
 // 消息列表请求
 type GetMessageListRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Page          int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`                            // 页码，从1开始
-	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`    // 每页条数（默认20，最大100）
-	OnlyNotes     bool                   `protobuf:"varint,3,opt,name=only_notes,json=onlyNotes,proto3" json:"only_notes,omitempty"` // 仅小纸条
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 页码，从1开始（默认1）
+	Page int32 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	// 每页条数（默认20，最大100）
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 仅小纸条（true=只返回 message_type=1）
+	OnlyNotes     bool `protobuf:"varint,3,opt,name=only_notes,json=onlyNotes,proto3" json:"only_notes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -178,9 +188,11 @@ func (x *GetMessageListRequest) GetOnlyNotes() bool {
 
 // 消息列表响应
 type GetMessageListReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Total         int32                  `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
-	List          []*Message             `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 总条数
+	Total int32 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// 当前页消息列表
+	List          []*Message `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -231,8 +243,9 @@ func (x *GetMessageListReply) GetList() []*Message {
 
 // 解锁小纸条请求
 type UnlockMessageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MessageId     int64                  `protobuf:"varint,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 目标消息ID
+	MessageId     int64 `protobuf:"varint,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -276,12 +289,15 @@ func (x *UnlockMessageRequest) GetMessageId() int64 {
 
 // 解锁小纸条响应
 type UnlockMessageReply struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Success        bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`                                     // 是否成功
-	RemainingCoins int32                  `protobuf:"varint,2,opt,name=remaining_coins,json=remainingCoins,proto3" json:"remaining_coins,omitempty"` // 解锁后剩余金币
-	Message        *Message               `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`                                      // 解锁后的完整消息
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否成功（金币足够且状态有效）
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// 解锁后剩余金币（未开启金币体系时可为0）
+	RemainingCoins int32 `protobuf:"varint,2,opt,name=remaining_coins,json=remainingCoins,proto3" json:"remaining_coins,omitempty"`
+	// 解锁后的完整消息
+	Message       *Message `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UnlockMessageReply) Reset() {
@@ -363,10 +379,10 @@ const file_message_v1_message_proto_rawDesc = "" +
 	"\x12UnlockMessageReply\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12'\n" +
 	"\x0fremaining_coins\x18\x02 \x01(\x05R\x0eremainingCoins\x121\n" +
-	"\amessage\x18\x03 \x01(\v2\x17.api.message.v1.MessageR\amessage2\x8d\x02\n" +
+	"\amessage\x18\x03 \x01(\v2\x17.api.message.v1.MessageR\amessage2\x90\x02\n" +
 	"\x0eMessageService\x12v\n" +
-	"\x0eGetMessageList\x12%.api.message.v1.GetMessageListRequest\x1a#.api.message.v1.GetMessageListReply\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/message/list\x12\x82\x01\n" +
-	"\rUnlockMessage\x12$.api.message.v1.UnlockMessageRequest\x1a\".api.message.v1.UnlockMessageReply\"'\x82\xd3\xe4\x93\x02!\"\x1f/v1/message/{message_id}/unlockB\x1dZ\x1bpet-angel/api/message/v1;v1b\x06proto3"
+	"\x0eGetMessageList\x12%.api.message.v1.GetMessageListRequest\x1a#.api.message.v1.GetMessageListReply\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/message/list\x12\x85\x01\n" +
+	"\rUnlockMessage\x12$.api.message.v1.UnlockMessageRequest\x1a\".api.message.v1.UnlockMessageReply\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/message/{message_id}/unlockB\x1dZ\x1bpet-angel/api/message/v1;v1b\x06proto3"
 
 var (
 	file_message_v1_message_proto_rawDescOnce sync.Once

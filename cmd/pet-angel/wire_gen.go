@@ -7,16 +7,15 @@
 package main
 
 import (
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
 	"pet-angel/internal/data"
 	"pet-angel/internal/server"
 	"pet-angel/internal/service"
-)
 
-import (
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
+
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -45,7 +44,7 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, minioCo
 	avatarService := service.NewAvatarService(avatarUsecase, authConf, logger)
 	messageRepoImpl := data.NewMessageRepo(dataData)
 	messageUsecase := biz.NewMessageUsecase(messageRepoImpl)
-	messageService := service.NewMessageService(messageUsecase, logger)
+	messageService := service.NewMessageService(messageUsecase, authConf, logger)
 	uploadService := service.NewUploadService(storageConf, logger)
 	grpcServer := server.NewGRPCServer(srv, greeterService, authService, userService, communityService, avatarService, messageService, uploadService, logger)
 	httpServer := server.NewHTTPServer(srv, storageConf, greeterService, authService, userService, communityService, avatarService, messageService, uploadService, logger)

@@ -33,7 +33,7 @@ paths:
                 - AuthService
             description: |-
                 重新登录/校验当前登录态
-                 说明：服务端从请求头读取 JWT 校验有效性，入参为空。
+                 说明：服务端从请求头读取 JWT 校验有效性，入参可为空即可。
             operationId: AuthService_Relogin
             requestBody:
                 content:
@@ -85,6 +85,27 @@ paths:
                 - AvatarService
             description: 发送一条聊天消息给 AI（同步返回本条消息；可选返回AI的即时回复）
             operationId: AvatarService_Chat
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.avatar.v1.ChatRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.avatar.v1.ChatReply'
+    /v1/avatar/chat/stream:
+        post:
+            tags:
+                - AvatarService
+            description: |-
+                流式聊天（服务端以 SSE 持续返回 AI 回复片段；前端逐段渲染）
+                 备注：本接口仅支持 HTTP，GRPC 下可另行定义 bidi-stream。
+            operationId: AvatarService_ChatStream
             requestBody:
                 content:
                     application/json:
@@ -184,6 +205,7 @@ paths:
             parameters:
                 - name: commentId
                   in: path
+                  description: 评论ID
                   required: true
                   schema:
                     type: string
@@ -203,6 +225,7 @@ paths:
             parameters:
                 - name: commentId
                   in: path
+                  description: 评论ID
                   required: true
                   schema:
                     type: string
@@ -222,24 +245,29 @@ paths:
             parameters:
                 - name: categoryId
                   in: query
+                  description: 分类过滤（可空，为0或缺省则为全部分类）
                   schema:
                     type: string
                 - name: postType
                   in: query
+                  description: 帖子类型过滤：-1=全部 0=图文 1=视频（默认-1）
                   schema:
                     type: integer
                     format: int32
                 - name: sort
                   in: query
+                  description: 排序字段：created=按创建时间倒序、liked=按点赞数倒序（默认created）
                   schema:
                     type: string
                 - name: page
                   in: query
+                  description: 页码，从1开始（默认1）
                   schema:
                     type: integer
                     format: int32
                 - name: pageSize
                   in: query
+                  description: 每页条数（默认20，最大100；超出按100处理）
                   schema:
                     type: integer
                     format: int32
@@ -277,6 +305,7 @@ paths:
             parameters:
                 - name: postId
                   in: path
+                  description: 帖子ID
                   required: true
                   schema:
                     type: string
@@ -296,16 +325,19 @@ paths:
             parameters:
                 - name: postId
                   in: path
+                  description: 帖子ID
                   required: true
                   schema:
                     type: string
                 - name: page
                   in: query
+                  description: 页码，从1开始（默认1）
                   schema:
                     type: integer
                     format: int32
                 - name: pageSize
                   in: query
+                  description: 每页条数（默认20，最大100）
                   schema:
                     type: integer
                     format: int32
@@ -349,6 +381,7 @@ paths:
             parameters:
                 - name: postId
                   in: path
+                  description: 帖子ID
                   required: true
                   schema:
                     type: string
@@ -368,6 +401,7 @@ paths:
             parameters:
                 - name: postId
                   in: path
+                  description: 帖子ID
                   required: true
                   schema:
                     type: string
@@ -387,16 +421,19 @@ paths:
             parameters:
                 - name: page
                   in: query
+                  description: 页码，从1开始（默认1）
                   schema:
                     type: integer
                     format: int32
                 - name: pageSize
                   in: query
+                  description: 每页条数（默认20，最大100）
                   schema:
                     type: integer
                     format: int32
                 - name: onlyNotes
                   in: query
+                  description: 仅小纸条（true=只返回 message_type=1）
                   schema:
                     type: boolean
             responses:
@@ -415,9 +452,16 @@ paths:
             parameters:
                 - name: messageId
                   in: path
+                  description: 目标消息ID
                   required: true
                   schema:
                     type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.message.v1.UnlockMessageRequest'
+                required: true
             responses:
                 "200":
                     description: OK
@@ -429,7 +473,7 @@ paths:
         post:
             tags:
                 - UploadService
-            description: 上传完成登记（后端中转模式或直传完成后回调登记）
+            description: 上传完成登记（占位，当前回显输入）
             operationId: UploadService_UploadDone
             requestBody:
                 content:
@@ -444,19 +488,42 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/api.upload.v1.UploadDoneReply'
+    /v1/upload/file:
+        post:
+            tags:
+                - UploadService
+            description: 本地表单文件上传（multipart/form-data）
+            operationId: UploadService_UploadFile
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.upload.v1.UploadFileRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.upload.v1.UploadFileReply'
     /v1/upload/presign:
         get:
             tags:
                 - UploadService
-            description: 获取直传预签名（推荐）
+            description: |-
+                以下接口为兼容未来直传方案的占位
+                 获取直传预签名（占位，当前返回未实现）
             operationId: UploadService_GetPresign
             parameters:
                 - name: fileName
                   in: query
+                  description: 原始文件名（含扩展名）
                   schema:
                     type: string
                 - name: contentType
                   in: query
+                  description: MIME 类型（如 image/png）
                   schema:
                     type: string
             responses:
@@ -588,33 +655,49 @@ components:
             properties:
                 userId:
                     type: string
+                    description: 用户ID
                 nickname:
                     type: string
+                    description: 昵称
                 avatar:
                     type: string
+                    description: 头像URL
                 modelId:
                     type: string
+                    description: 当前宠物模型ID（未设置则为0）
                 petName:
                     type: string
+                    description: 宠物名称
                 petAvatar:
                     type: string
+                    description: 宠物头像URL
                 petSex:
                     type: integer
+                    description: 宠物性别 0未知/1男/2女
                     format: int32
                 kind:
                     type: string
+                    description: 宠物品类
                 weight:
                     type: integer
+                    description: 体重（kg）
                     format: int32
                 hobby:
                     type: string
+                    description: 爱好
                 description:
                     type: string
+                    description: 个人/宠物简介
                 coins:
                     type: integer
+                    description: 金币余额
                     format: int32
                 createdAt:
                     type: string
+                    description: 创建时间 YYYY-MM-DD HH:MM:SS
+                modelUrl:
+                    type: string
+                    description: 当前宠物模型URL（与 pet_models.path 一致，未设置则为空）
             description: 获取用户信息响应
         api.auth.v1.LoginReply:
             type: object
@@ -635,10 +718,10 @@ components:
             properties:
                 username:
                     type: string
-                    description: 用户名（或手机号/邮箱），由前端提供
+                    description: 用户名（或手机号/邮箱）
                 password:
                     type: string
-                    description: 密码（明文或加密传输，建议 HTTPS）
+                    description: 密码（建议 HTTPS 传输）
             description: 登录请求
         api.auth.v1.ReloginReply:
             type: object
@@ -662,47 +745,64 @@ components:
             properties:
                 nickname:
                     type: string
+                    description: 昵称
                 avatar:
                     type: string
+                    description: 头像URL
                 modelId:
                     type: string
+                    description: 当前宠物模型ID
                 petName:
                     type: string
+                    description: 宠物名称
                 petAvatar:
                     type: string
+                    description: 宠物头像URL
                 petSex:
                     type: integer
+                    description: 宠物性别 0未知/1男/2女
                     format: int32
                 kind:
                     type: string
+                    description: 宠物品类
                 weight:
                     type: integer
+                    description: 体重（kg）
                     format: int32
                 hobby:
                     type: string
+                    description: 爱好（如：散步、逗猫棒）
                 description:
                     type: string
+                    description: 个人/宠物简介
             description: 更新用户信息请求（仅包含需要更新的字段）
         api.avatar.v1.ChatReply:
             type: object
             properties:
                 messageId:
                     type: string
+                    description: 本次用户消息的ID
                 content:
                     type: string
+                    description: 本次用户消息内容回显
                 createdAt:
                     type: string
+                    description: 发送时间 YYYY-MM-DD HH:MM:SS
                 aiMessageId:
                     type: string
+                    description: （可选）AI 回复的消息ID
                 aiContent:
                     type: string
+                    description: （可选）AI 回复的文本
                 aiCreatedAt:
                     type: string
+                    description: （可选）AI 回复时间 YYYY-MM-DD HH:MM:SS
         api.avatar.v1.ChatRequest:
             type: object
             properties:
                 content:
                     type: string
+                    description: 用户输入的文本内容
             description: 聊天
         api.avatar.v1.GetItemsReply:
             type: object
@@ -711,6 +811,7 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.avatar.v1.Item'
+                    description: 道具列表
         api.avatar.v1.GetModelsReply:
             type: object
             properties:
@@ -718,19 +819,25 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.avatar.v1.PetModel'
+                    description: 模型列表
         api.avatar.v1.Item:
             type: object
             properties:
                 id:
                     type: string
+                    description: 道具ID
                 name:
                     type: string
+                    description: 道具名称
                 description:
                     type: string
+                    description: 描述文案
                 iconPath:
                     type: string
+                    description: 图标URL
                 coinCost:
                     type: integer
+                    description: 消耗金币
                     format: int32
             description: 道具
         api.avatar.v1.PetModel:
@@ -738,17 +845,23 @@ components:
             properties:
                 id:
                     type: string
+                    description: 模型ID
                 name:
                     type: string
+                    description: 模型名称
                 path:
                     type: string
+                    description: 模型资源URL（MinIO）
                 modelType:
                     type: integer
+                    description: 模型类型：0=猫 1=狗
                     format: int32
                 isDefault:
                     type: boolean
+                    description: 是否默认
                 sortOrder:
                     type: integer
+                    description: 排序序号（数值越小越靠前）
                     format: int32
             description: 宠物模型
         api.avatar.v1.SetPetModelReply:
@@ -756,55 +869,70 @@ components:
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
         api.avatar.v1.SetPetModelRequest:
             type: object
             properties:
                 modelId:
                     type: string
+                    description: 目标模型ID
             description: 设置当前模型
         api.avatar.v1.UseItemReply:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
                 message:
                     type: string
+                    description: 使用结果与提示（例如：喂食成功）
         api.avatar.v1.UseItemRequest:
             type: object
             properties:
                 itemId:
                     type: string
+                    description: 道具ID
             description: 使用道具
         api.community.v1.Category:
             type: object
             properties:
                 id:
                     type: string
+                    description: 分类ID
                 name:
                     type: string
+                    description: 分类名称
             description: 帖子分类
         api.community.v1.Comment:
             type: object
             properties:
                 id:
                     type: string
+                    description: 评论ID
                 user:
-                    $ref: '#/components/schemas/api.community.v1.UserBrief'
+                    allOf:
+                        - $ref: '#/components/schemas/api.community.v1.UserBrief'
+                    description: 评论者
                 content:
                     type: string
+                    description: 内容（建议<=500字）
                 likedCount:
                     type: integer
+                    description: 点赞数
                     format: int32
                 createdAt:
                     type: string
+                    description: 创建时间 YYYY-MM-DD HH:MM:SS
                 isLiked:
                     type: boolean
+                    description: 当前用户是否点赞
             description: 评论
         api.community.v1.CreateCommentReply:
             type: object
             properties:
                 id:
                     type: string
+                    description: 新评论ID
         api.community.v1.CreateCommentRequest:
             type: object
             properties:
@@ -817,34 +945,45 @@ components:
             properties:
                 id:
                     type: string
+                    description: 新帖ID
         api.community.v1.CreatePostRequest:
             type: object
             properties:
                 categoryId:
                     type: string
+                    description: 分类ID（可空，为0或缺省则不归类）
                 title:
                     type: string
+                    description: 标题（可选，建议<=50字）
                 content:
                     type: string
+                    description: 文本内容（当 post_type=0 时必填，建议<=1000字）
                 postType:
                     type: integer
+                    description: 帖子类型：0=图文 1=视频（默认0）
                     format: int32
                 imageUrls:
                     type: array
                     items:
                         type: string
+                    description: 图文贴：图片URL列表（最多9张，至少1张）
                 videoUrl:
                     type: string
+                    description: 视频贴：视频URL（post_type=1 时必填）
                 coverUrl:
                     type: string
+                    description: 封面URL（可选，用于列表展示）
                 locate:
                     type: string
+                    description: 位置（可选）
                 tags:
                     type: array
                     items:
                         type: string
+                    description: 标签（可选）
                 isPrivate:
                     type: boolean
+                    description: 是否私密（默认false）
             description: 发帖
         api.community.v1.GetCategoriesReply:
             type: object
@@ -853,175 +992,247 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.community.v1.Category'
+                    description: 分类列表
         api.community.v1.GetCommentListReply:
             type: object
             properties:
                 total:
                     type: integer
+                    description: 结果总条数
                     format: int32
                 list:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.community.v1.Comment'
+                    description: 当前页评论列表
         api.community.v1.GetPostDetailReply:
             type: object
             properties:
                 post:
-                    $ref: '#/components/schemas/api.community.v1.Post'
+                    allOf:
+                        - $ref: '#/components/schemas/api.community.v1.Post'
+                    description: 帖子详情
         api.community.v1.GetPostListReply:
             type: object
             properties:
                 total:
                     type: integer
+                    description: 结果总条数
                     format: int32
                 list:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.community.v1.Post'
+                    description: 当前页帖子列表
         api.community.v1.LikeCommentReply:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
         api.community.v1.LikePostReply:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
         api.community.v1.Post:
             type: object
             properties:
                 id:
                     type: string
+                    description: 帖子ID
                 user:
-                    $ref: '#/components/schemas/api.community.v1.UserBrief'
+                    allOf:
+                        - $ref: '#/components/schemas/api.community.v1.UserBrief'
+                    description: 作者信息
                 categoryId:
                     type: string
+                    description: 分类ID
                 title:
                     type: string
+                    description: 标题
                 content:
                     type: string
+                    description: 文本内容
                 postType:
                     type: integer
+                    description: 帖子类型：0=图文 1=视频（与发布时保持一致）
                     format: int32
                 imageUrls:
                     type: array
                     items:
                         type: string
+                    description: 图片URL列表（图文）
                 videoUrl:
                     type: string
+                    description: 视频URL（视频）
                 coverUrl:
                     type: string
+                    description: 封面URL（可选，用于列表首帧展示）
                 locate:
                     type: string
+                    description: 位置文本（可选，例如城市/商圈）
                 tags:
                     type: array
                     items:
                         type: string
+                    description: 标签（可选，最多若干个，按业务约束）
                 likedCount:
                     type: integer
+                    description: 点赞数
                     format: int32
                 commentCount:
                     type: integer
+                    description: 评论数
                     format: int32
                 createdAt:
                     type: string
+                    description: 创建时间 YYYY-MM-DD HH:MM:SS
                 isLiked:
                     type: boolean
+                    description: 当前用户是否已点赞
                 isPrivate:
                     type: boolean
+                    description: 是否私密（私密仅自己可见）
             description: 帖子实体
         api.community.v1.UnlikeCommentReply:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
         api.community.v1.UnlikePostReply:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: 是否成功
         api.community.v1.UserBrief:
             type: object
             properties:
                 id:
                     type: string
+                    description: 用户ID
                 nickname:
                     type: string
+                    description: 昵称
                 avatar:
                     type: string
+                    description: 头像URL
                 isFollowed:
                     type: boolean
+                    description: 当前登录用户是否已关注该作者
             description: 用户简要信息（用于帖子/评论作者）
         api.message.v1.GetMessageListReply:
             type: object
             properties:
                 total:
                     type: integer
+                    description: 总条数
                     format: int32
                 list:
                     type: array
                     items:
                         $ref: '#/components/schemas/api.message.v1.Message'
+                    description: 当前页消息列表
             description: 消息列表响应
         api.message.v1.Message:
             type: object
             properties:
                 id:
                     type: string
+                    description: 消息ID
                 sender:
                     type: integer
+                    description: 发送方：0=用户 1=AI
                     format: int32
                 messageType:
                     type: integer
+                    description: 消息类型：0=聊天 1=小纸条
                     format: int32
                 isLocked:
                     type: boolean
+                    description: 小纸条是否锁定
                 unlockCoins:
                     type: integer
+                    description: 小纸条解锁所需金币
                     format: int32
                 content:
                     type: string
+                    description: 文本内容（锁定时可为空或返回占位）
                 createdAt:
                     type: string
+                    description: 创建时间 YYYY-MM-DD HH:MM:SS
             description: 消息体
         api.message.v1.UnlockMessageReply:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: 是否成功（金币足够且状态有效）
                 remainingCoins:
                     type: integer
+                    description: 解锁后剩余金币（未开启金币体系时可为0）
                     format: int32
                 message:
-                    $ref: '#/components/schemas/api.message.v1.Message'
+                    allOf:
+                        - $ref: '#/components/schemas/api.message.v1.Message'
+                    description: 解锁后的完整消息
             description: 解锁小纸条响应
+        api.message.v1.UnlockMessageRequest:
+            type: object
+            properties:
+                messageId:
+                    type: string
+                    description: 目标消息ID
+            description: 解锁小纸条请求
         api.upload.v1.GetPresignReply:
             type: object
             properties:
                 url:
                     type: string
+                    description: 直传地址（PUT/POST）
                 method:
                     type: string
+                    description: 使用方法：PUT/POST
                 headers:
                     type: object
                     additionalProperties:
                         type: string
+                    description: 直传需要携带的HTTP头
                 finalUrl:
                     type: string
+                    description: 上传完成后的可访问URL
             description: 预签名响应
         api.upload.v1.UploadDoneReply:
             type: object
             properties:
                 url:
                     type: string
+                    description: 确认后的访问URL（可与入参相同）
             description: 上传完成登记响应
         api.upload.v1.UploadDoneRequest:
             type: object
             properties:
                 url:
                     type: string
+                    description: 已上传对象的访问URL
             description: 上传完成登记请求
+        api.upload.v1.UploadFileReply:
+            type: object
+            properties:
+                url:
+                    type: string
+                    description: 可访问 URL（以 public_prefix 开头，如 /static/...）
+            description: 表单上传响应
+        api.upload.v1.UploadFileRequest:
+            type: object
+            properties:
+                type:
+                    type: string
+                    description: 资源类别（avatar/image/video），也可由表单字段传入（缺省=image）
+            description: 表单上传请求
         api.user.v1.FollowUserReply:
             type: object
             properties:
@@ -1147,7 +1358,11 @@ tags:
     - name: UploadService
       description: |-
         上传服务
-         推荐直传 MinIO：服务端签发预签信息，前端直传；或使用后端中转完成登记
+         当前实现：后端中转保存到本地服务器目录，并返回可访问 URL
+         说明：
+         - 统一入口 /v1/upload/file，表单字段：file（必填），type（可选：avatar/image/video）
+         - 资源会保存到 {local_root}/{type}/{YYYY/MM/DD}/ 文件夹
+         - 返回可直接访问的 URL（以 public_prefix 开头，如 /static/...）
     - name: UserService
       description: |-
         用户关系与主页服务

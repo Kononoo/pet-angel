@@ -25,7 +25,7 @@ const (
 // 关注请求
 type FollowUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TargetUserId  int64                  `protobuf:"varint,1,opt,name=target_user_id,json=targetUserId,proto3" json:"target_user_id,omitempty"`
+	TargetUserId  int64                  `protobuf:"varint,1,opt,name=target_user_id,json=targetUserId,proto3" json:"target_user_id,omitempty"` // 目标用户ID（必填，>0）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,7 +114,7 @@ func (x *FollowUserReply) GetSuccess() bool {
 // 取消关注请求
 type UnfollowUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TargetUserId  int64                  `protobuf:"varint,1,opt,name=target_user_id,json=targetUserId,proto3" json:"target_user_id,omitempty"`
+	TargetUserId  int64                  `protobuf:"varint,1,opt,name=target_user_id,json=targetUserId,proto3" json:"target_user_id,omitempty"` // 目标用户ID（必填，>0）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -204,9 +204,9 @@ func (x *UnfollowUserReply) GetSuccess() bool {
 type PostBrief struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                   // 帖子ID
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`                              // 标题
-	PostType      int32                  `protobuf:"varint,3,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`       // 0图文 1视频
-	CoverUrl      string                 `protobuf:"bytes,4,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`        // 封面URL
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`                              // 标题（可为空）
+	PostType      int32                  `protobuf:"varint,3,opt,name=post_type,json=postType,proto3" json:"post_type,omitempty"`       // 帖子类型：0=图文 1=视频
+	CoverUrl      string                 `protobuf:"bytes,4,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`        // 封面URL（可为空）
 	LikedCount    int32                  `protobuf:"varint,5,opt,name=liked_count,json=likedCount,proto3" json:"liked_count,omitempty"` // 点赞数
 	CreatedAt     string                 `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`     // 创建时间 YYYY-MM-DD HH:MM:SS
 	unknownFields protoimpl.UnknownFields
@@ -288,7 +288,7 @@ func (x *PostBrief) GetCreatedAt() string {
 // 用户主页请求
 type GetUserProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 目标用户ID（必填，>0）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -341,7 +341,7 @@ type GetUserProfileReply struct {
 	Weight        int32                  `protobuf:"varint,6,opt,name=weight,proto3" json:"weight,omitempty"`                            // 体重(kg)
 	Hobby         string                 `protobuf:"bytes,7,opt,name=hobby,proto3" json:"hobby,omitempty"`                               // 爱好
 	Description   string                 `protobuf:"bytes,8,opt,name=description,proto3" json:"description,omitempty"`                   // 简介
-	Posts         []*PostBrief           `protobuf:"bytes,9,rep,name=posts,proto3" json:"posts,omitempty"`                               // 最近的帖子
+	Posts         []*PostBrief           `protobuf:"bytes,9,rep,name=posts,proto3" json:"posts,omitempty"`                               // 最近的帖子（按时间倒序，条数由服务端控制）
 	IsFollowed    bool                   `protobuf:"varint,10,opt,name=is_followed,json=isFollowed,proto3" json:"is_followed,omitempty"` // 当前登录用户是否已关注该用户
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -511,9 +511,9 @@ func (x *UserBrief) GetAvatar() string {
 // 关注列表请求/响应
 type GetFollowListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 目标用户ID
+	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                         // 页码，从1开始（默认1）
+	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页条数（默认20，最大100）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -624,9 +624,9 @@ func (x *GetFollowListReply) GetList() []*UserBrief {
 // 点赞列表请求/响应
 type GetLikeListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 目标用户ID
+	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                         // 页码，从1开始（默认1）
+	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页条数（默认20，最大100）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

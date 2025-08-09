@@ -16,35 +16,56 @@ service MessageService {
   }
   // 解锁一条小纸条（message_type=1）
   rpc UnlockMessage(UnlockMessageRequest) returns (UnlockMessageReply) {
-    option (google.api.http) = { post: "/v1/message/{message_id}/unlock" };
+    option (google.api.http) = { post: "/v1/message/{message_id}/unlock" body: "*" };
   }
 }
 
 // 消息体
 message Message {
-  int64 id = 1;              // 消息ID
-  int32 sender = 2;          // 发送方 0用户 1AI
-  int32 message_type = 3;    // 0聊天 1小纸条
-  bool is_locked = 4;        // 小纸条是否锁定
-  int32 unlock_coins = 5;    // 小纸条解锁所需金币
-  string content = 6;        // 文本内容（锁定时可为空或返回占位）
-  string created_at = 7;     // 创建时间 YYYY-MM-DD HH:MM:SS
+  // 消息ID
+  int64 id = 1;
+  // 发送方：0=用户 1=AI
+  int32 sender = 2;
+  // 消息类型：0=聊天 1=小纸条
+  int32 message_type = 3;
+  // 小纸条是否锁定
+  bool is_locked = 4;
+  // 小纸条解锁所需金币
+  int32 unlock_coins = 5;
+  // 文本内容（锁定时可为空或返回占位）
+  string content = 6;
+  // 创建时间 YYYY-MM-DD HH:MM:SS
+  string created_at = 7;
 }
 
 // 消息列表请求
 message GetMessageListRequest {
-  int32 page = 1;            // 页码，从1开始
-  int32 page_size = 2;       // 每页条数（默认20，最大100）
-  bool only_notes = 3;       // 仅小纸条
+  // 页码，从1开始（默认1）
+  int32 page = 1;
+  // 每页条数（默认20，最大100）
+  int32 page_size = 2;
+  // 仅小纸条（true=只返回 message_type=1）
+  bool only_notes = 3;
 }
 // 消息列表响应
-message GetMessageListReply { int32 total = 1; repeated Message list = 2; }
+message GetMessageListReply {
+  // 总条数
+  int32 total = 1;
+  // 当前页消息列表
+  repeated Message list = 2;
+}
 
 // 解锁小纸条请求
-message UnlockMessageRequest { int64 message_id = 1; } // 目标消息ID
+message UnlockMessageRequest {
+  // 目标消息ID
+  int64 message_id = 1;
+}
 // 解锁小纸条响应
 message UnlockMessageReply {
-  bool success = 1;          // 是否成功
-  int32 remaining_coins = 2; // 解锁后剩余金币
-  Message message = 3;       // 解锁后的完整消息
-} 
+  // 是否成功（金币足够且状态有效）
+  bool success = 1;
+  // 解锁后剩余金币（未开启金币体系时可为0）
+  int32 remaining_coins = 2;
+  // 解锁后的完整消息
+  Message message = 3;
+}

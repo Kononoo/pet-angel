@@ -31,25 +31,41 @@ service UploadService {
 
 // 表单上传请求
 message UploadFileRequest {
-  string type = 1; // 资源类别（avatar/image/video），也可由表单字段传入
+  // 资源类别（avatar/image/video），也可由表单字段传入（缺省=image）
+  string type = 1;
 }
 // 表单上传响应
-message UploadFileReply { string url = 1; }
+message UploadFileReply {
+  // 可访问 URL（以 public_prefix 开头，如 /static/...）
+  string url = 1;
+}
 
 // 预签名请求
 message GetPresignRequest {
-  string file_name = 1;     // 原始文件名（含扩展名）
-  string content_type = 2;  // MIME 类型（如 image/png）
+  // 原始文件名（含扩展名）
+  string file_name = 1;
+  // MIME 类型（如 image/png）
+  string content_type = 2;
 }
 // 预签名响应
 message GetPresignReply {
-  string url = 1;                 // 直传地址（PUT/POST）
-  string method = 2;              // PUT/POST
-  map<string,string> headers = 3; // 直传需要携带的HTTP头
-  string final_url = 4;           // 上传完成后的可访问URL
+  // 直传地址（PUT/POST）
+  string url = 1;
+  // 使用方法：PUT/POST
+  string method = 2;
+  // 直传需要携带的HTTP头
+  map<string,string> headers = 3;
+  // 上传完成后的可访问URL
+  string final_url = 4;
 }
 
 // 上传完成登记请求
-message UploadDoneRequest { string url = 1; } // 已上传对象的访问URL
+message UploadDoneRequest {
+  // 已上传对象的访问URL
+  string url = 1;
+}
 // 上传完成登记响应
-message UploadDoneReply { string url = 1; }   // 确认后的访问URL（可与入参相同）
+message UploadDoneReply {
+  // 确认后的访问URL（可与入参相同）
+  string url = 1;
+}

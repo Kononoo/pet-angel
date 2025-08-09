@@ -57,6 +57,9 @@ func _MessageService_GetMessageList0_HTTP_Handler(srv MessageServiceHTTPServer) 
 func _MessageService_UnlockMessage0_HTTP_Handler(srv MessageServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in UnlockMessageRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
@@ -105,10 +108,10 @@ func (c *MessageServiceHTTPClientImpl) GetMessageList(ctx context.Context, in *G
 func (c *MessageServiceHTTPClientImpl) UnlockMessage(ctx context.Context, in *UnlockMessageRequest, opts ...http.CallOption) (*UnlockMessageReply, error) {
 	var out UnlockMessageReply
 	pattern := "/v1/message/{message_id}/unlock"
-	path := binding.EncodeURL(pattern, in, true)
+	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationMessageServiceUnlockMessage))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "POST", path, nil, &out, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

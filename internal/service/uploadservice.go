@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -45,6 +46,40 @@ func saveMultipartFile(file multipart.File, dst string) error {
 	return err
 }
 
+// ------- 校验配置 -------
+const (
+	maxImageMB = 50
+	maxVideoMB = 1000
+)
+
+var (
+	allowedImageMIMEs = map[string]bool{
+		"image/jpeg": true, "image/png": true, "image/gif": true, "image/webp": true,
+	}
+	allowedVideoMIMEs = map[string]bool{
+		"video/mp4": true, "video/quicktime": true,
+	}
+)
+
+func mimeToExt(ct string) string {
+	switch ct {
+	case "image/jpeg":
+		return ".jpg"
+	case "image/png":
+		return ".png"
+	case "image/gif":
+		return ".gif"
+	case "image/webp":
+		return ".webp"
+	case "video/mp4":
+		return ".mp4"
+	case "video/quicktime":
+		return ".mov"
+	default:
+		return ""
+	}
+}
+
 func (s *UploadService) UploadFile(ctx context.Context, in *uploadv1.UploadFileRequest) (*uploadv1.UploadFileReply, error) {
 	root := "./data/assets"
 	prefix := "/static/"
@@ -79,8 +114,42 @@ func (s *UploadService) UploadFile(ctx context.Context, in *uploadv1.UploadFileR
 	category := req.FormValue("type")
 	if category == "" {
 		category = strings.ToLower(strings.TrimSpace(in.GetType()))
-		if category == "" {
-			category = "other"
+	}
+	if category == "" {
+		category = "image"
+	}
+	// 归一化：avatar 视作 image 类目保存
+	isAvatar := category == "avatar"
+	isVideo := category == "video"
+	if isAvatar {
+		category = "avatar"
+	} else if isVideo {
+		category = "video"
+	} else {
+		category = "image"
+	}
+
+	// sniff content-type
+	sniff := make([]byte, 512)
+	n, _ := file.Read(sniff)
+	_, _ = file.Seek(0, io.SeekStart)
+	contentType := http.DetectContentType(sniff[:n])
+
+	// 校验 MIME 与大小
+	switch category {
+	case "image", "avatar":
+		if !allowedImageMIMEs[contentType] {
+			return nil, errors.New("unsupported image type")
+		}
+		if header.Size > 0 && header.Size > int64(maxImageMB)*1024*1024 {
+			return nil, errors.New("image too large")
+		}
+	case "video":
+		if !allowedVideoMIMEs[contentType] {
+			return nil, errors.New("unsupported video type")
+		}
+		if header.Size > 0 && header.Size > int64(maxVideoMB)*1024*1024 {
+			return nil, errors.New("video too large")
 		}
 	}
 	subdir := filepath.Join(category, time.Now().Format("2006/01/02"))
@@ -90,7 +159,11 @@ func (s *UploadService) UploadFile(ctx context.Context, in *uploadv1.UploadFileR
 	}
 	ext := filepath.Ext(header.Filename)
 	if ext == "" {
-		ext = ".bin"
+		if e := mimeToExt(contentType); e != "" {
+			ext = e
+		} else {
+			ext = ".bin"
+		}
 	}
 	filename := fmt.Sprintf("%d_%d%s", time.Now().UnixNano(), os.Getpid(), ext)
 	dst := filepath.Join(baseDir, filename)

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 
+	aiclient "pet-angel/internal/ai"
 	"pet-angel/internal/conf"
 
 	"github.com/go-kratos/kratos/v2"
@@ -70,6 +71,9 @@ func main() {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
+
+	// 初始化 AI 客户端（从配置加载）。
+	aiclient.LoadFromConfig(c)
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Auth, bc.Minio, bc.Storage, logger)
 	if err != nil {

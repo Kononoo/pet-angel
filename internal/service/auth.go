@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	authv1 "pet-angel/api/auth/v1"
+	aiclient "pet-angel/internal/ai"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
 	jwtutil "pet-angel/internal/util/jwt"
@@ -30,6 +31,12 @@ func NewAuthService(uc *biz.AuthUsecase, authCfg *conf.Auth, l log.Logger) *Auth
 		secret = authCfg.JwtSecret
 	}
 	jwtutil.SetGlobalSecret(secret)
+	// 初始化 AI 客户端（从全局配置加载）。若未配置将使用默认（硅基流动）
+	// 这里通过 kratos config 不易直接获取整体 config，因此采用默认构造，
+	// 在 main/wire 初始化阶段可考虑加载 ai 配置并 SetClient；此处兜底。
+	if aiclient.Default() == nil {
+		aiclient.SetClient(aiclient.NewClient(aiclient.Config{}))
+	}
 	return &AuthService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 

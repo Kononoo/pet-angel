@@ -3,8 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
@@ -134,19 +132,6 @@ func ensureDir(path string) error {
 	return os.MkdirAll(path, 0o755)
 }
 
-// saveMultipartFile 保存上传的文件
-func saveMultipartFile(file multipart.File, dst string) error {
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-	if _, err := io.Copy(out, file); err != nil {
-		return err
-	}
-	return nil
-}
-
 // NewHTTPServer new an HTTP server.
 func NewHTTPServer(c *conf.Server, storage *conf.Storage, greeter *service.GreeterService, auth *service.AuthService, user *service.UserService, community *service.CommunityService, avatar *service.AvatarService, message *service.MessageService, upload *service.UploadService, logger log.Logger) *khttp.Server {
 	var opts = []khttp.ServerOption{
@@ -201,6 +186,11 @@ func NewHTTPServer(c *conf.Server, storage *conf.Storage, greeter *service.Greet
 	communityv1.RegisterCommunityServiceHTTPServer(srv, community)
 	avatv1.RegisterAvatarServiceHTTPServer(srv, avatar)
 	msgv1.RegisterMessageServiceHTTPServer(srv, message)
+	// 供内部/运维触发：生成今日小纸条
+	srv.HandleFunc("/v1/message/generate-notes", message.GenerateNotesHTTP())
 	uploadv1.RegisterUploadServiceHTTPServer(srv, upload)
+
+	// SSE: 流式聊天（拆分至 service 层的原生 handler）
+	srv.HandleFunc("/v1/avatar/chat/stream", avatar.ChatStreamHTTP())
 	return srv
 }

@@ -24,8 +24,9 @@ const (
 
 // 表单上传请求
 type UploadFileRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"` // 资源类别（avatar/image/video），也可由表单字段传入
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 资源类别（avatar/image/video），也可由表单字段传入（缺省=image）
+	Type          string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,8 +70,9 @@ func (x *UploadFileRequest) GetType() string {
 
 // 表单上传响应
 type UploadFileReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 可访问 URL（以 public_prefix 开头，如 /static/...）
+	Url           string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,9 +116,11 @@ func (x *UploadFileReply) GetUrl() string {
 
 // 预签名请求
 type GetPresignRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FileName      string                 `protobuf:"bytes,1,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`          // 原始文件名（含扩展名）
-	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"` // MIME 类型（如 image/png）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 原始文件名（含扩展名）
+	FileName string `protobuf:"bytes,1,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	// MIME 类型（如 image/png）
+	ContentType   string `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -167,11 +171,15 @@ func (x *GetPresignRequest) GetContentType() string {
 
 // 预签名响应
 type GetPresignReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`                                                                                   // 直传地址（PUT/POST）
-	Method        string                 `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`                                                                             // PUT/POST
-	Headers       map[string]string      `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 直传需要携带的HTTP头
-	FinalUrl      string                 `protobuf:"bytes,4,opt,name=final_url,json=finalUrl,proto3" json:"final_url,omitempty"`                                                         // 上传完成后的可访问URL
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 直传地址（PUT/POST）
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	// 使用方法：PUT/POST
+	Method string `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
+	// 直传需要携带的HTTP头
+	Headers map[string]string `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// 上传完成后的可访问URL
+	FinalUrl      string `protobuf:"bytes,4,opt,name=final_url,json=finalUrl,proto3" json:"final_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -236,8 +244,9 @@ func (x *GetPresignReply) GetFinalUrl() string {
 
 // 上传完成登记请求
 type UploadDoneRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 已上传对象的访问URL
+	Url           string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -281,8 +290,9 @@ func (x *UploadDoneRequest) GetUrl() string {
 
 // 上传完成登记响应
 type UploadDoneReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 确认后的访问URL（可与入参相同）
+	Url           string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

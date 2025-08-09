@@ -163,3 +163,12 @@ func (r *MessageRepoImpl) UnlockMessage(ctx context.Context, userID, messageID i
 	}
 	return remaining, out, nil
 }
+
+// CreateLockedNote 生成一条锁定的小纸条（AI 个性化内容）
+func (r *MessageRepoImpl) CreateLockedNote(ctx context.Context, userID int64, unlockCoins int32, content string) (int64, error) {
+	row := &MessageDO{UserID: userID, Sender: 1, MessageType: 1, IsLocked: true, UnlockCoins: unlockCoins, Content: content}
+	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
+		return 0, err
+	}
+	return row.ID, nil
+}

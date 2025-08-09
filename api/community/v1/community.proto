@@ -54,82 +54,192 @@ service CommunityService {
 }
 
 // 帖子分类
-message Category { int64 id = 1; string name = 2; }
-message GetCategoriesRequest {} // 无入参
-message GetCategoriesReply { repeated Category categories = 1; }
+message Category {
+  // 分类ID
+  int64 id = 1;
+  // 分类名称
+  string name = 2;
+}
+message GetCategoriesRequest {}
+message GetCategoriesReply {
+  // 分类列表
+  repeated Category categories = 1;
+}
 
 // 用户简要信息（用于帖子/评论作者）
-message UserBrief { int64 id = 1; string nickname = 2; string avatar = 3; bool is_followed = 4; }
+message UserBrief {
+  // 用户ID
+  int64 id = 1;
+  // 昵称
+  string nickname = 2;
+  // 头像URL
+  string avatar = 3;
+  // 当前登录用户是否已关注该作者
+  bool is_followed = 4;
+}
 
 // 帖子实体
 message Post {
-  int64 id = 1;                     // 帖子ID
-  UserBrief user = 2;               // 作者信息
-  int64 category_id = 3;            // 分类ID
-  string title = 4;                 // 标题
-  string content = 5;               // 文本内容
-  int32 post_type = 6;              // 帖子类型 0图文 1视频
-  repeated string image_urls = 7;   // 图片URL列表（图文）
-  string video_url = 8;             // 视频URL（视频）
-  string cover_url = 9;             // 封面URL
-  string locate = 10;               // 位置文本
-  repeated string tags = 11;        // 标签
-  int32 liked_count = 12;           // 点赞数
-  int32 comment_count = 13;         // 评论数
-  string created_at = 14;           // 创建时间 YYYY-MM-DD HH:MM:SS
-  bool is_liked = 15;               // 当前用户是否已点赞
-  bool is_private = 16;             // 是否私密
+  // 帖子ID
+  int64 id = 1;
+  // 作者信息
+  UserBrief user = 2;
+  // 分类ID
+  int64 category_id = 3;
+  // 标题
+  string title = 4;
+  // 文本内容
+  string content = 5;
+  // 帖子类型：0=图文 1=视频（与发布时保持一致）
+  int32 post_type = 6;
+  // 图片URL列表（图文）
+  repeated string image_urls = 7;
+  // 视频URL（视频）
+  string video_url = 8;
+  // 封面URL（可选，用于列表首帧展示）
+  string cover_url = 9;
+  // 位置文本（可选，例如城市/商圈）
+  string locate = 10;
+  // 标签（可选，最多若干个，按业务约束）
+  repeated string tags = 11;
+  // 点赞数
+  int32 liked_count = 12;
+  // 评论数
+  int32 comment_count = 13;
+  // 创建时间 YYYY-MM-DD HH:MM:SS
+  string created_at = 14;
+  // 当前用户是否已点赞
+  bool is_liked = 15;
+  // 是否私密（私密仅自己可见）
+  bool is_private = 16;
 }
 
 // 帖子列表查询参数
 message GetPostListRequest {
-  int64 category_id = 1;            // 分类过滤（可空）
-  int32 post_type = 2;              // -1全部 0图文 1视频（默认-1）
-  string sort = 3;                  // created|liked
-  int32 page = 4;                   // 页码，从1开始
-  int32 page_size = 5;              // 每页条数（默认20，最大100）
+  // 分类过滤（可空，为0或缺省则为全部分类）
+  int64 category_id = 1;
+  // 帖子类型过滤：-1=全部 0=图文 1=视频（默认-1）
+  int32 post_type = 2;
+  // 排序字段：created=按创建时间倒序、liked=按点赞数倒序（默认created）
+  string sort = 3;
+  // 页码，从1开始（默认1）
+  int32 page = 4;
+  // 每页条数（默认20，最大100；超出按100处理）
+  int32 page_size = 5;
 }
-message GetPostListReply { int32 total = 1; repeated Post list = 2; }
+message GetPostListReply {
+  // 结果总条数
+  int32 total = 1;
+  // 当前页帖子列表
+  repeated Post list = 2;
+}
 
 // 帖子详情
-message GetPostDetailRequest { int64 post_id = 1; }
-message GetPostDetailReply { Post post = 1; }
+message GetPostDetailRequest {
+  // 帖子ID
+  int64 post_id = 1;
+}
+message GetPostDetailReply {
+  // 帖子详情
+  Post post = 1;
+}
 
 // 发帖
 message CreatePostRequest {
-  int64 category_id = 1;            // 分类ID（可空）
-  string title = 2;                 // 标题
-  string content = 3;               // 文本内容
-  int32 post_type = 4;              // 0图文 1视频
-  repeated string image_urls = 5;   // 图文：图片URL列表
-  string video_url = 6;             // 视频：视频URL
-  string cover_url = 7;             // 封面URL
-  string locate = 8;                // 位置
-  repeated string tags = 9;         // 标签
-  bool is_private = 10;             // 是否私密
+  // 分类ID（可空，为0或缺省则不归类）
+  int64 category_id = 1;
+  // 标题（可选，建议<=50字）
+  string title = 2;
+  // 文本内容（当 post_type=0 时必填，建议<=1000字）
+  string content = 3;
+  // 帖子类型：0=图文 1=视频（默认0）
+  int32 post_type = 4;
+  // 图文贴：图片URL列表（最多9张，至少1张）
+  repeated string image_urls = 5;
+  // 视频贴：视频URL（post_type=1 时必填）
+  string video_url = 6;
+  // 封面URL（可选，用于列表展示）
+  string cover_url = 7;
+  // 位置（可选）
+  string locate = 8;
+  // 标签（可选）
+  repeated string tags = 9;
+  // 是否私密（默认false）
+  bool is_private = 10;
 }
-message CreatePostReply { int64 id = 1; } // 新帖ID
+message CreatePostReply {
+  // 新帖ID
+  int64 id = 1;
+}
 
 // 帖子点赞
-message LikePostRequest { int64 post_id = 1; }
-message LikePostReply { bool success = 1; }
-message UnlikePostRequest { int64 post_id = 1; }
-message UnlikePostReply { bool success = 1; }
+message LikePostRequest {
+  // 帖子ID
+  int64 post_id = 1;
+}
+message LikePostReply {
+  // 是否成功
+  bool success = 1;
+}
+message UnlikePostRequest {
+  // 帖子ID
+  int64 post_id = 1;
+}
+message UnlikePostReply {
+  // 是否成功
+  bool success = 1;
+}
 
 // 评论
 message Comment {
-  int64 id = 1;              // 评论ID
-  UserBrief user = 2;        // 评论者
-  string content = 3;        // 内容
-  int32 liked_count = 4;     // 点赞数
-  string created_at = 5;     // 创建时间
-  bool is_liked = 6;         // 当前用户是否点赞
+  // 评论ID
+  int64 id = 1;
+  // 评论者
+  UserBrief user = 2;
+  // 内容（建议<=500字）
+  string content = 3;
+  // 点赞数
+  int32 liked_count = 4;
+  // 创建时间 YYYY-MM-DD HH:MM:SS
+  string created_at = 5;
+  // 当前用户是否点赞
+  bool is_liked = 6;
 }
-message GetCommentListRequest { int64 post_id = 1; int32 page = 2; int32 page_size = 3; }
-message GetCommentListReply { int32 total = 1; repeated Comment list = 2; }
-message CreateCommentRequest { int64 post_id = 1; string content = 2; }
-message CreateCommentReply { int64 id = 1; }
-message LikeCommentRequest { int64 comment_id = 1; }
-message LikeCommentReply { bool success = 1; }
-message UnlikeCommentRequest { int64 comment_id = 1; }
-message UnlikeCommentReply { bool success = 1; } 
+message GetCommentListRequest {
+  // 帖子ID
+  int64 post_id = 1;
+  // 页码，从1开始（默认1）
+  int32 page = 2;
+  // 每页条数（默认20，最大100）
+  int32 page_size = 3;
+}
+message GetCommentListReply {
+  // 结果总条数
+  int32 total = 1;
+  // 当前页评论列表
+  repeated Comment list = 2;
+}
+message CreateCommentRequest {
+  int64 post_id = 1;         // 帖子ID
+  string content = 2;        // 评论内容（必填，建议<=500字）
+}
+message CreateCommentReply {
+  // 新评论ID
+  int64 id = 1;
+}
+message LikeCommentRequest {
+  // 评论ID
+  int64 comment_id = 1;
+}
+message LikeCommentReply {
+  // 是否成功
+  bool success = 1;
+}
+message UnlikeCommentRequest {
+  // 评论ID
+  int64 comment_id = 1;
+}
+message UnlikeCommentReply {
+  // 是否成功
+  bool success = 1;
+}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	aiclient "pet-angel/internal/ai"
 	"pet-angel/internal/biz"
 
 	"gorm.io/gorm"
@@ -167,4 +168,53 @@ func (r *AvatarRepo) CreateChat(ctx context.Context, userID int64, content strin
 		Content:     row.Content,
 		CreatedAt:   row.CreatedAt,
 	}, nil
+}
+
+// CreateAIChat 调用 AI 并将回复落库为一条来自 AI 的消息
+func (r *AvatarRepo) CreateAIChat(ctx context.Context, userID int64, content string) (*biz.ChatMsg, error) {
+	// 读取用户/宠物关键信息作为 system prompt 的一部分（可选，不阻塞）
+	var profile struct{ Nickname, PetName, Kind string }
+	_ = r.data.Gorm.WithContext(ctx).Table("users").
+		Select("nickname,pet_name,kind").Where("id=?", userID).Scan(&profile).Error
+
+	system := "你是一个治愈系的宠物数字伙伴，以第一人称‘我’的口吻，温柔简短地回复。"
+	if profile.PetName != "" {
+		system += " 我的名字是" + profile.PetName + "。"
+	}
+	if profile.Kind != "" {
+		system += " 我是一只" + profile.Kind + "。"
+	}
+	c := aiclient.Default()
+	if c == nil {
+		aiclient.SetClient(aiclient.NewClient(aiclient.Config{}))
+		c = aiclient.Default()
+	}
+	reply, err := c.Chat(ctx, system, content)
+	if err != nil {
+		// 失败时也写一条兜底回复，保证对话连续
+		reply = "我听到了你的心情，我会一直陪着你~"
+	}
+	row := &MessageDO{UserID: userID, Sender: 1, MessageType: 0, IsLocked: false, UnlockCoins: 0, Content: reply}
+	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
+		return nil, err
+	}
+	return &biz.ChatMsg{
+		ID:          row.ID,
+		UserID:      row.UserID,
+		Sender:      row.Sender,
+		MessageType: row.MessageType,
+		IsLocked:    row.IsLocked,
+		UnlockCoins: row.UnlockCoins,
+		Content:     row.Content,
+		CreatedAt:   row.CreatedAt,
+	}, nil
+}
+
+// CreateAIMessage 直接写入一条来自 AI 的消息
+func (r *AvatarRepo) CreateAIMessage(ctx context.Context, userID int64, content string) (*biz.ChatMsg, error) {
+	row := &MessageDO{UserID: userID, Sender: 1, MessageType: 0, IsLocked: false, UnlockCoins: 0, Content: content}
+	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
+		return nil, err
+	}
+	return &biz.ChatMsg{ID: row.ID, UserID: row.UserID, Sender: row.Sender, MessageType: row.MessageType, IsLocked: row.IsLocked, UnlockCoins: row.UnlockCoins, Content: row.Content, CreatedAt: row.CreatedAt}, nil
 }

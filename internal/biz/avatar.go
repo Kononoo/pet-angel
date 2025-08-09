@@ -49,6 +49,9 @@ type AvatarRepo interface {
 	UseItem(ctx context.Context, userID, itemID int64) (remainingCoins int32, err error)
 
 	CreateChat(ctx context.Context, userID int64, content string) (*ChatMsg, error)
+	CreateAIChat(ctx context.Context, userID int64, content string) (*ChatMsg, error)
+	// 直接写入一条 AI 消息（用于流式完成后落库）
+	CreateAIMessage(ctx context.Context, userID int64, content string) (*ChatMsg, error)
 }
 
 // AvatarUsecase 业务用例
@@ -91,5 +94,23 @@ func (uc *AvatarUsecase) UseItem(ctx context.Context, userID, itemID int64) (int
 
 // Chat 发送聊天消息（同步返回该条消息）
 func (uc *AvatarUsecase) Chat(ctx context.Context, userID int64, content string) (*ChatMsg, error) {
+	// 1) 先写入用户消息
+	userMsg, err := uc.repo.CreateChat(ctx, userID, content)
+	if err != nil {
+		return nil, err
+	}
+	// 2) 生成 AI 回复（由 data 层调用 AI 客户端并落库），保持简单直连
+	//    返回值可选；业务层只需保证用户消息已记录
+	_, _ = uc.repo.CreateAIChat(ctx, userID, content)
+	return userMsg, nil
+}
+
+// SaveAIMessage 将一段 AI 文本回复直接写库（供流式完成后调用）
+func (uc *AvatarUsecase) SaveAIMessage(ctx context.Context, userID int64, content string) (*ChatMsg, error) {
+	return uc.repo.CreateAIMessage(ctx, userID, content)
+}
+
+// SaveUserMessage 仅保存用户消息（不触发 AI 回复）
+func (uc *AvatarUsecase) SaveUserMessage(ctx context.Context, userID int64, content string) (*ChatMsg, error) {
 	return uc.repo.CreateChat(ctx, userID, content)
 }

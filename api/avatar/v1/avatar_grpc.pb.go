@@ -24,6 +24,7 @@ const (
 	AvatarService_GetItems_FullMethodName    = "/api.avatar.v1.AvatarService/GetItems"
 	AvatarService_UseItem_FullMethodName     = "/api.avatar.v1.AvatarService/UseItem"
 	AvatarService_Chat_FullMethodName        = "/api.avatar.v1.AvatarService/Chat"
+	AvatarService_ChatStream_FullMethodName  = "/api.avatar.v1.AvatarService/ChatStream"
 )
 
 // AvatarServiceClient is the client API for AvatarService service.
@@ -45,6 +46,9 @@ type AvatarServiceClient interface {
 	UseItem(ctx context.Context, in *UseItemRequest, opts ...grpc.CallOption) (*UseItemReply, error)
 	// 发送一条聊天消息给 AI（同步返回本条消息；可选返回AI的即时回复）
 	Chat(ctx context.Context, in *ChatRequest, opts ...grpc.CallOption) (*ChatReply, error)
+	// 流式聊天（服务端以 SSE 持续返回 AI 回复片段；前端逐段渲染）
+	// 备注：本接口仅支持 HTTP，GRPC 下可另行定义 bidi-stream。
+	ChatStream(ctx context.Context, in *ChatRequest, opts ...grpc.CallOption) (*ChatReply, error)
 }
 
 type avatarServiceClient struct {
@@ -105,6 +109,16 @@ func (c *avatarServiceClient) Chat(ctx context.Context, in *ChatRequest, opts ..
 	return out, nil
 }
 
+func (c *avatarServiceClient) ChatStream(ctx context.Context, in *ChatRequest, opts ...grpc.CallOption) (*ChatReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChatReply)
+	err := c.cc.Invoke(ctx, AvatarService_ChatStream_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AvatarServiceServer is the server API for AvatarService service.
 // All implementations must embed UnimplementedAvatarServiceServer
 // for forward compatibility.
@@ -124,6 +138,9 @@ type AvatarServiceServer interface {
 	UseItem(context.Context, *UseItemRequest) (*UseItemReply, error)
 	// 发送一条聊天消息给 AI（同步返回本条消息；可选返回AI的即时回复）
 	Chat(context.Context, *ChatRequest) (*ChatReply, error)
+	// 流式聊天（服务端以 SSE 持续返回 AI 回复片段；前端逐段渲染）
+	// 备注：本接口仅支持 HTTP，GRPC 下可另行定义 bidi-stream。
+	ChatStream(context.Context, *ChatRequest) (*ChatReply, error)
 	mustEmbedUnimplementedAvatarServiceServer()
 }
 
@@ -148,6 +165,9 @@ func (UnimplementedAvatarServiceServer) UseItem(context.Context, *UseItemRequest
 }
 func (UnimplementedAvatarServiceServer) Chat(context.Context, *ChatRequest) (*ChatReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Chat not implemented")
+}
+func (UnimplementedAvatarServiceServer) ChatStream(context.Context, *ChatRequest) (*ChatReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChatStream not implemented")
 }
 func (UnimplementedAvatarServiceServer) mustEmbedUnimplementedAvatarServiceServer() {}
 func (UnimplementedAvatarServiceServer) testEmbeddedByValue()                       {}
@@ -260,6 +280,24 @@ func _AvatarService_Chat_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AvatarService_ChatStream_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AvatarServiceServer).ChatStream(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AvatarService_ChatStream_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AvatarServiceServer).ChatStream(ctx, req.(*ChatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AvatarService_ServiceDesc is the grpc.ServiceDesc for AvatarService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -286,6 +324,10 @@ var AvatarService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Chat",
 			Handler:    _AvatarService_Chat_Handler,
+		},
+		{
+			MethodName: "ChatStream",
+			Handler:    _AvatarService_ChatStream_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

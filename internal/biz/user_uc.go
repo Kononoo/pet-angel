@@ -57,6 +57,8 @@ type UserRepo interface {
 	GetUserPostsBrief(ctx context.Context, userID int64, limit int32) ([]*PostBrief, error)
 	GetFollowList(ctx context.Context, userID int64, page, pageSize int32) ([]*UserBrief, int32, error)
 	GetLikeList(ctx context.Context, userID int64, page, pageSize int32) ([]*PostBrief, int32, error)
+
+	GetModelPath(ctx context.Context, modelID int64) (string, error)
 }
 
 // UserUsecase 用户关系与主页用例
@@ -80,6 +82,12 @@ func (u *UserUsecase) GetProfile(ctx context.Context, viewerID, userID int64) (*
 	usr, err := u.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, nil, false, err
+	}
+	// 以 pet_models.path 为准，刷新 ModelURL
+	if usr != nil && usr.ModelID > 0 {
+		if path, perr := u.repo.GetModelPath(ctx, usr.ModelID); perr == nil && path != "" {
+			usr.ModelURL = path
+		}
 	}
 	posts, err := u.repo.GetUserPostsBrief(ctx, userID, 10)
 	if err != nil {

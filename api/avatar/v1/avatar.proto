@@ -31,47 +31,92 @@ service AvatarService {
   rpc Chat(ChatRequest) returns (ChatReply) {
     option (google.api.http) = { post: "/v1/avatar/chat" body: "*" };
   }
+  // 流式聊天（服务端以 SSE 持续返回 AI 回复片段；前端逐段渲染）
+  // 备注：本接口仅支持 HTTP，GRPC 下可另行定义 bidi-stream。
+  rpc ChatStream(ChatRequest) returns (ChatReply) {
+    option (google.api.http) = { post: "/v1/avatar/chat/stream" body: "*" };
+  }
 }
 
 // 宠物模型
 message PetModel {
-  int64 id = 1;          // 模型ID
-  string name = 2;       // 模型名称
-  string path = 3;       // 模型资源URL（MinIO）
-  int32 model_type = 4;  // 0=猫 1=狗
-  bool is_default = 5;   // 是否默认
-  int32 sort_order = 6;  // 排序序号
+  // 模型ID
+  int64 id = 1;
+  // 模型名称
+  string name = 2;
+  // 模型资源URL（MinIO）
+  string path = 3;
+  // 模型类型：0=猫 1=狗
+  int32 model_type = 4;
+  // 是否默认
+  bool is_default = 5;
+  // 排序序号（数值越小越靠前）
+  int32 sort_order = 6;
 }
 
-message GetModelsRequest {} // 无入参
-message GetModelsReply { repeated PetModel models = 1; } // 模型列表
+message GetModelsRequest {}
+message GetModelsReply {
+  // 模型列表
+  repeated PetModel models = 1;
+}
 
 // 设置当前模型
-message SetPetModelRequest { int64 model_id = 1; } // 目标模型ID
-message SetPetModelReply { bool success = 1; }     // 是否成功
+message SetPetModelRequest {
+  // 目标模型ID
+  int64 model_id = 1;
+}
+message SetPetModelReply {
+  // 是否成功
+  bool success = 1;
+}
 
 // 道具
 message Item {
-  int64 id = 1;           // 道具ID
-  string name = 2;        // 道具名称
-  string description = 3; // 描述文案
-  string icon_path = 4;   // 图标URL
-  int32 coin_cost = 5;    // 消耗金币
+  // 道具ID
+  int64 id = 1;
+  // 道具名称
+  string name = 2;
+  // 描述文案
+  string description = 3;
+  // 图标URL
+  string icon_path = 4;
+  // 消耗金币
+  int32 coin_cost = 5;
 }
-message GetItemsRequest {}                 // 无入参
-message GetItemsReply { repeated Item items = 1; } // 道具列表
+message GetItemsRequest {}
+message GetItemsReply {
+  // 道具列表
+  repeated Item items = 1;
+}
 
 // 使用道具
-message UseItemRequest { int64 item_id = 1; }          // 道具ID
-message UseItemReply { bool success = 1; string message = 2; } // 使用结果与提示
+message UseItemRequest {
+  // 道具ID
+  int64 item_id = 1;
+}
+message UseItemReply {
+  // 是否成功
+  bool success = 1;
+  // 使用结果与提示（例如：喂食成功）
+  string message = 2;
+}
 
 // 聊天
-message ChatRequest { string content = 1; } // 用户输入的文本内容
+message ChatRequest {
+  // 用户输入的文本内容
+  string content = 1;
+}
 message ChatReply {
-  int64 message_id = 1;   // 本次用户消息的ID
-  string content = 2;     // 本次用户消息内容回显
-  string created_at = 3;  // 发送时间 YYYY-MM-DD HH:MM:SS
-  int64 ai_message_id = 4;// （可选）AI 回复的消息ID
-  string ai_content = 5;  // （可选）AI 回复的文本
-  string ai_created_at = 6;// （可选）AI 回复时间
+  // 本次用户消息的ID
+  int64 message_id = 1;
+  // 本次用户消息内容回显
+  string content = 2;
+  // 发送时间 YYYY-MM-DD HH:MM:SS
+  string created_at = 3;
+  // （可选）AI 回复的消息ID
+  int64 ai_message_id = 4;
+  // （可选）AI 回复的文本
+  string ai_content = 5;
+  // （可选）AI 回复时间 YYYY-MM-DD HH:MM:SS
+  string ai_created_at = 6;
 } 

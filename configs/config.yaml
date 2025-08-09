@@ -1,10 +1,10 @@
 server:
   http:
     addr: 0.0.0.0:8000
-    timeout: 1s
+    timeout: 3s
   grpc:
     addr: 0.0.0.0:9000
-    timeout: 1s
+    timeout: 3s
 data:
   database:
     driver: mysql
@@ -25,5 +25,11 @@ minio:
   use_ssl: false
   bucket: "pet-angel"
 storage:
-  local_root: "./data/assets"
+  local_root: "/usr/local/app/pet-angel/data/assets"
   public_prefix: "/static/"
+ai:
+  model: "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+  base_url: "https://api.siliconflow.cn/v1/"
+  api_key: "sk-wucfvbppymimfcrmzrtbowbnpquyudkjbjpzahlavmlhddmq"
+  max_tokens: 163840
+  temperature: 0.5
