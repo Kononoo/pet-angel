@@ -33,6 +33,7 @@ func wireApp(srv *conf.Server, dataConf *conf.Data, authConf *conf.Auth, logger 
 		// interface bindings
 		wire.Bind(new(biz.GreeterRepo), new(*data.GreeterRepo)),
 		wire.Bind(new(biz.AuthRepo), new(*data.AuthRepo)),
+		wire.Bind(new(biz.UserRepo), new(*data.UserRepoImpl)),
 		wire.Bind(new(biz.CommunityRepo), new(*data.CommunityRepoImpl)),
 		wire.Bind(new(biz.AvatarRepo), new(*data.AvatarRepo)),
 

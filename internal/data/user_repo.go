@@ -57,7 +57,7 @@ func (UserPostModel) TableName() string { return "posts" }
 
 type UserRepoImpl struct{ data *Data }
 
-func NewUserRepo(d *Data) biz.UserRepo {
+func NewUserRepo(d *Data) *UserRepoImpl {
 	return &UserRepoImpl{data: d}
 }
 

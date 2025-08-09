@@ -10,6 +10,7 @@ import (
 	"pet-angel/internal/conf"
 	jwtutil "pet-angel/internal/util/jwt"
 
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 )
 
@@ -21,14 +22,15 @@ type CommunityService struct {
 	pb.UnimplementedCommunityServiceServer
 	uc        *biz.CommunityUsecase
 	jwtSecret string
+	logger    *log.Helper
 }
 
-func NewCommunityService(uc *biz.CommunityUsecase, cfg *conf.Auth) *CommunityService {
+func NewCommunityService(uc *biz.CommunityUsecase, cfg *conf.Auth, l log.Logger) *CommunityService {
 	secret := ""
 	if cfg != nil {
 		secret = cfg.JwtSecret
 	}
-	return &CommunityService{uc: uc, jwtSecret: secret}
+	return &CommunityService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 
 // userID 解析登录用户ID
@@ -52,6 +54,7 @@ func (s *CommunityService) userID(ctx context.Context) (int64, error) {
 func (s *CommunityService) GetCategories(ctx context.Context, req *pb.GetCategoriesRequest) (*pb.GetCategoriesReply, error) {
 	list, err := s.uc.GetCategories(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get categories failed: %v", err)
 		return nil, err
 	}
 	out := &pb.GetCategoriesReply{}
@@ -72,6 +75,7 @@ func (s *CommunityService) GetPostList(ctx context.Context, req *pb.GetPostListR
 	}
 	total, list, err := s.uc.GetPostList(ctx, viewerID, req.GetCategoryId(), req.GetPostType(), strings.ToLower(req.GetSort()), req.GetPage(), req.GetPageSize())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get posts failed: %v", err)
 		return nil, err
 	}
 	out := &pb.GetPostListReply{Total: total}
@@ -109,6 +113,7 @@ func (s *CommunityService) GetPostDetail(ctx context.Context, req *pb.GetPostDet
 	}
 	p, err := s.uc.GetPostDetail(ctx, viewerID, req.GetPostId())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get post detail failed: %v", err)
 		return nil, err
 	}
 	return &pb.GetPostDetailReply{Post: &pb.Post{
@@ -135,6 +140,7 @@ func (s *CommunityService) GetPostDetail(ctx context.Context, req *pb.GetPostDet
 func (s *CommunityService) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("create post: auth failed: %v", err)
 		return nil, err
 	}
 	id, err := s.uc.CreatePost(ctx, uid, &biz.CommunityPost{
@@ -150,6 +156,7 @@ func (s *CommunityService) CreatePost(ctx context.Context, req *pb.CreatePostReq
 		IsPrivate:  req.GetIsPrivate(),
 	})
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("create post: usecase error: %v", err)
 		return nil, err
 	}
 	return &pb.CreatePostReply{Id: id}, nil
@@ -159,9 +166,11 @@ func (s *CommunityService) CreatePost(ctx context.Context, req *pb.CreatePostReq
 func (s *CommunityService) LikePost(ctx context.Context, req *pb.LikePostRequest) (*pb.LikePostReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("like post: auth failed: %v", err)
 		return nil, err
 	}
 	if err := s.uc.LikePost(ctx, uid, req.GetPostId()); err != nil {
+		s.logger.WithContext(ctx).Errorf("like post: usecase error: %v", err)
 		return nil, err
 	}
 	return &pb.LikePostReply{Success: true}, nil
@@ -171,9 +180,11 @@ func (s *CommunityService) LikePost(ctx context.Context, req *pb.LikePostRequest
 func (s *CommunityService) UnlikePost(ctx context.Context, req *pb.UnlikePostRequest) (*pb.UnlikePostReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("unlike post: auth failed: %v", err)
 		return nil, err
 	}
 	if err := s.uc.UnlikePost(ctx, uid, req.GetPostId()); err != nil {
+		s.logger.WithContext(ctx).Errorf("unlike post: usecase error: %v", err)
 		return nil, err
 	}
 	return &pb.UnlikePostReply{Success: true}, nil
@@ -190,6 +201,7 @@ func (s *CommunityService) GetCommentList(ctx context.Context, req *pb.GetCommen
 	}
 	total, list, err := s.uc.GetCommentList(ctx, viewerID, req.GetPostId(), req.GetPage(), req.GetPageSize())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get comment list failed: %v", err)
 		return nil, err
 	}
 	out := &pb.GetCommentListReply{Total: total}
@@ -210,10 +222,12 @@ func (s *CommunityService) GetCommentList(ctx context.Context, req *pb.GetCommen
 func (s *CommunityService) CreateComment(ctx context.Context, req *pb.CreateCommentRequest) (*pb.CreateCommentReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("create comment: auth failed: %v", err)
 		return nil, err
 	}
 	id, err := s.uc.CreateComment(ctx, uid, req.GetPostId(), req.GetContent())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("create comment: usecase error: %v", err)
 		return nil, err
 	}
 	return &pb.CreateCommentReply{Id: id}, nil
@@ -223,9 +237,11 @@ func (s *CommunityService) CreateComment(ctx context.Context, req *pb.CreateComm
 func (s *CommunityService) LikeComment(ctx context.Context, req *pb.LikeCommentRequest) (*pb.LikeCommentReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("like comment: auth failed: %v", err)
 		return nil, err
 	}
 	if err := s.uc.LikeComment(ctx, uid, req.GetCommentId()); err != nil {
+		s.logger.WithContext(ctx).Errorf("like comment: usecase error: %v", err)
 		return nil, err
 	}
 	return &pb.LikeCommentReply{Success: true}, nil
@@ -235,9 +251,11 @@ func (s *CommunityService) LikeComment(ctx context.Context, req *pb.LikeCommentR
 func (s *CommunityService) UnlikeComment(ctx context.Context, req *pb.UnlikeCommentRequest) (*pb.UnlikeCommentReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("unlike comment: auth failed: %v", err)
 		return nil, err
 	}
 	if err := s.uc.UnlikeComment(ctx, uid, req.GetCommentId()); err != nil {
+		s.logger.WithContext(ctx).Errorf("unlike comment: usecase error: %v", err)
 		return nil, err
 	}
 	return &pb.UnlikeCommentReply{Success: true}, nil

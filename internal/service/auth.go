@@ -9,6 +9,7 @@ import (
 	"pet-angel/internal/conf"
 	jwtutil "pet-angel/internal/util/jwt"
 
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 )
 
@@ -19,21 +20,23 @@ type AuthService struct {
 	authv1.UnimplementedAuthServiceServer
 	uc        *biz.AuthUsecase
 	jwtSecret string
+	logger    *log.Helper
 }
 
 // NewAuthService 构造函数，注入用例与 JWT 配置
-func NewAuthService(uc *biz.AuthUsecase, authCfg *conf.Auth) *AuthService {
+func NewAuthService(uc *biz.AuthUsecase, authCfg *conf.Auth, l log.Logger) *AuthService {
 	secret := ""
 	if authCfg != nil {
 		secret = authCfg.JwtSecret
 	}
-	return &AuthService{uc: uc, jwtSecret: secret}
+	return &AuthService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 
 // Login 用户名+密码登录，返回 JWT
 func (s *AuthService) Login(ctx context.Context, in *authv1.LoginRequest) (*authv1.LoginReply, error) {
 	u, token, exp, err := s.uc.Login(ctx, in.GetUsername(), in.GetPassword())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("login failed: %v", err)
 		return nil, err
 	}
 	return &authv1.LoginReply{UserId: u.Id, Token: token, ExpiresIn: exp}, nil
@@ -58,18 +61,22 @@ func (s *AuthService) Relogin(ctx context.Context, in *authv1.ReloginRequest) (*
 func (s *AuthService) GetUserInfo(ctx context.Context, in *authv1.GetUserInfoRequest) (*authv1.GetUserInfoReply, error) {
 	ts, ok := transport.FromServerContext(ctx)
 	if !ok {
+		s.logger.WithContext(ctx).Errorf("get user info: no server context")
 		return nil, http.ErrNoCookie
 	}
 	tok, err := jwtutil.FromAuthHeader(ts.RequestHeader().Get("Authorization"))
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get user info: bad auth header: %v", err)
 		return nil, err
 	}
 	claims, err := jwtutil.Parse(s.jwtSecret, tok)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get user info: parse jwt failed: %v", err)
 		return nil, err
 	}
 	u, err := s.uc.GetUserInfo(ctx, claims.UserID)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get user info: usecase error: %v", err)
 		return nil, err
 	}
 	return &authv1.GetUserInfoReply{
@@ -81,7 +88,7 @@ func (s *AuthService) GetUserInfo(ctx context.Context, in *authv1.GetUserInfoReq
 		PetAvatar:   u.PetAvatar,
 		PetSex:      u.PetSex,
 		Kind:        u.Kind,
-		Weight:      int32(u.Weight),
+		Weight:      u.Weight,
 		Hobby:       u.Hobby,
 		Description: u.Description,
 		Coins:       u.Coins,
@@ -93,14 +100,17 @@ func (s *AuthService) GetUserInfo(ctx context.Context, in *authv1.GetUserInfoReq
 func (s *AuthService) UpdateUserInfo(ctx context.Context, in *authv1.UpdateUserInfoRequest) (*authv1.UpdateUserInfoReply, error) {
 	ts, ok := transport.FromServerContext(ctx)
 	if !ok {
+		s.logger.WithContext(ctx).Errorf("update user info: no server context")
 		return nil, http.ErrNoCookie
 	}
-	tok, err := jwtutil.FromAuthHeader(ts.RequestHeader().Get("Authorization"))
+	token, err := jwtutil.FromAuthHeader(ts.RequestHeader().Get("Authorization"))
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("update user info: bad auth header: %v", err)
 		return nil, err
 	}
-	claims, err := jwtutil.Parse(s.jwtSecret, tok)
+	claims, err := jwtutil.Parse(s.jwtSecret, token)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("update user info: parse jwt failed: %v", err)
 		return nil, err
 	}
 	user := &biz.User{
@@ -117,6 +127,7 @@ func (s *AuthService) UpdateUserInfo(ctx context.Context, in *authv1.UpdateUserI
 		Description: in.GetDescription(),
 	}
 	if err := s.uc.UpdateUserInfo(ctx, user); err != nil {
+		s.logger.WithContext(ctx).Errorf("update user info: usecase error: %v", err)
 		return nil, err
 	}
 	return &authv1.UpdateUserInfoReply{Success: true}, nil

@@ -9,6 +9,7 @@ import (
 	"pet-angel/internal/conf"
 	jwtutil "pet-angel/internal/util/jwt"
 
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 )
 
@@ -22,15 +23,16 @@ type UserService struct {
 	pb.UnimplementedUserServiceServer
 	uc        *biz.UserUsecase
 	jwtSecret string
+	logger    *log.Helper
 }
 
 // NewUserService 创建 UserService
-func NewUserService(uc *biz.UserUsecase, cfg *conf.Auth) *UserService {
+func NewUserService(uc *biz.UserUsecase, cfg *conf.Auth, l log.Logger) *UserService {
 	secret := ""
 	if cfg != nil {
 		secret = cfg.JwtSecret
 	}
-	return &UserService{uc: uc, jwtSecret: secret}
+	return &UserService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 
 // userID 从请求上下文解析当前登录用户 ID
@@ -54,28 +56,28 @@ func (s *UserService) userID(ctx context.Context) (int64, error) {
 func (s *UserService) FollowUser(ctx context.Context, req *pb.FollowUserRequest) (*pb.FollowUserReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("follow user: auth failed: %v", err)
 		return nil, err
 	}
 	if err := s.uc.Follow(ctx, uid, req.GetTargetUserId()); err != nil {
+		s.logger.WithContext(ctx).Errorf("follow user: usecase error: %v", err)
 		return nil, err
 	}
-	return &pb.FollowUserReply{
-		Success: true,
-	}, nil
+	return &pb.FollowUserReply{Success: true}, nil
 }
 
 // UnfollowUser 取消关注
 func (s *UserService) UnfollowUser(ctx context.Context, req *pb.UnfollowUserRequest) (*pb.UnfollowUserReply, error) {
 	uid, err := s.userID(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("unfollow user: auth failed: %v", err)
 		return nil, err
 	}
 	if err := s.uc.Unfollow(ctx, uid, req.GetTargetUserId()); err != nil {
+		s.logger.WithContext(ctx).Errorf("unfollow user: usecase error: %v", err)
 		return nil, err
 	}
-	return &pb.UnfollowUserReply{
-		Success: true,
-	}, nil
+	return &pb.UnfollowUserReply{Success: true}, nil
 }
 
 // GetUserProfile 获取用户主页信息
@@ -83,6 +85,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, req *pb.GetUserProfile
 	viewer, _ := s.userID(ctx)
 	u, posts, isFollowed, err := s.uc.GetProfile(ctx, viewer, req.GetUserId())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get profile failed: %v", err)
 		return nil, err
 	}
 	out := &pb.GetUserProfileReply{
@@ -113,17 +116,12 @@ func (s *UserService) GetUserProfile(ctx context.Context, req *pb.GetUserProfile
 func (s *UserService) GetFollowList(ctx context.Context, req *pb.GetFollowListRequest) (*pb.GetFollowListReply, error) {
 	list, total, err := s.uc.GetFollowList(ctx, req.GetUserId(), req.GetPage(), req.GetPageSize())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get follow list failed: %v", err)
 		return nil, err
 	}
-	out := &pb.GetFollowListReply{
-		Total: total,
-	}
+	out := &pb.GetFollowListReply{Total: total}
 	for _, it := range list {
-		out.List = append(out.List, &pb.UserBrief{
-			Id:       it.Id,
-			Nickname: it.Nickname,
-			Avatar:   it.Avatar,
-		})
+		out.List = append(out.List, &pb.UserBrief{Id: it.Id, Nickname: it.Nickname, Avatar: it.Avatar})
 	}
 	return out, nil
 }
@@ -132,20 +130,12 @@ func (s *UserService) GetFollowList(ctx context.Context, req *pb.GetFollowListRe
 func (s *UserService) GetLikeList(ctx context.Context, req *pb.GetLikeListRequest) (*pb.GetLikeListReply, error) {
 	list, total, err := s.uc.GetLikeList(ctx, req.GetUserId(), req.GetPage(), req.GetPageSize())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get like list failed: %v", err)
 		return nil, err
 	}
-	out := &pb.GetLikeListReply{
-		Total: total,
-	}
+	out := &pb.GetLikeListReply{Total: total}
 	for _, p := range list {
-		out.List = append(out.List, &pb.PostBrief{
-			Id:         p.Id,
-			Title:      p.Title,
-			PostType:   p.PostType,
-			CoverUrl:   p.CoverUrl,
-			LikedCount: p.LikedCount,
-			CreatedAt:  p.CreatedAt,
-		})
+		out.List = append(out.List, &pb.PostBrief{Id: p.Id, Title: p.Title, PostType: p.PostType, CoverUrl: p.CoverUrl, LikedCount: p.LikedCount, CreatedAt: p.CreatedAt})
 	}
 	return out, nil
 }

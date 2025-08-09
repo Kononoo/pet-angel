@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id`           bigint(20)   NOT NULL AUTO_INCREMENT COMMENT '用户ID',
   `nickname`     varchar(50)  DEFAULT NULL COMMENT '昵称',
+  `username`     varchar(64)  DEFAULT '' COMMENT '登录用户名',
+  `password`     varchar(255) DEFAULT '' COMMENT '密码哈希（bcrypt）',
   `avatar`       varchar(255) DEFAULT NULL COMMENT '用户头像URL',
   `model_id`     bigint(20)   NOT NULL COMMENT '当前宠物模型ID（关联 pet_models.id）',
   `pet_name`     varchar(50)  DEFAULT NULL COMMENT '宠物名称',
@@ -30,12 +32,6 @@ CREATE TABLE `users` (
   KEY `idx_model_id` (`model_id`),
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
-
--- Migration: add username/password to users table if not exists
-ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `username` varchar(64) NOT NULL DEFAULT '' COMMENT '登录用户名（唯一）' AFTER `id`,
-  ADD COLUMN IF NOT EXISTS `password` varchar(255) NOT NULL DEFAULT '' COMMENT '密码哈希（bcrypt）' AFTER `username`;
-ALTER TABLE `users` ADD UNIQUE KEY IF NOT EXISTS `uk_username` (`username`);
 
 -- =========================
 -- 宠物模型表
@@ -197,4 +193,4 @@ ON DUPLICATE KEY UPDATE `icon_path`=VALUES(`icon_path`);
 
 INSERT INTO `categories` (`name`, `sort_order`) VALUES
 ('日常', 1),('知识', 2),('信息', 3),('种草', 4)
-ON DUPLICATE KEY UPDATE `sort_order`=VALUES(`sort_order`); 
+ON DUPLICATE KEY UPDATE `sort_order`=VALUES(`sort_order`);

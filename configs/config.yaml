@@ -16,4 +16,4 @@ data:
     write_timeout: 0.2s
 auth:
   jwt_secret: "abc123ABC?"
-  jwt_ttl: 259200s
+  jwt_ttl: 2592000s

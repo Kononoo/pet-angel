@@ -9,29 +9,34 @@ import (
 	"pet-angel/internal/conf"
 	jwtutil "pet-angel/internal/util/jwt"
 
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 )
 
 // AvatarService 虚拟形象/道具/聊天 服务
+// 负责：JWT 解析、参数与 proto 映射、错误日志
+
 type AvatarService struct {
 	avatv1.UnimplementedAvatarServiceServer
 	uc        *biz.AvatarUsecase
 	jwtSecret string
+	logger    *log.Helper
 }
 
 // NewAvatarService 依赖注入构造器
-func NewAvatarService(uc *biz.AvatarUsecase, authCfg *conf.Auth) *AvatarService {
+func NewAvatarService(uc *biz.AvatarUsecase, authCfg *conf.Auth, l log.Logger) *AvatarService {
 	secret := ""
 	if authCfg != nil {
 		secret = authCfg.JwtSecret
 	}
-	return &AvatarService{uc: uc, jwtSecret: secret}
+	return &AvatarService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 
 // GetModels 获取可用模型
 func (s *AvatarService) GetModels(ctx context.Context, in *avatv1.GetModelsRequest) (*avatv1.GetModelsReply, error) {
 	list, err := s.uc.GetModels(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get models failed: %v", err)
 		return nil, err
 	}
 	out := make([]*avatv1.PetModel, 0, len(list))
@@ -45,9 +50,11 @@ func (s *AvatarService) GetModels(ctx context.Context, in *avatv1.GetModelsReque
 func (s *AvatarService) SetPetModel(ctx context.Context, in *avatv1.SetPetModelRequest) (*avatv1.SetPetModelReply, error) {
 	userID, err := s.userIDFromCtx(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("set model: auth failed: %v", err)
 		return nil, err
 	}
 	if err := s.uc.SetPetModel(ctx, userID, in.GetModelId()); err != nil {
+		s.logger.WithContext(ctx).Errorf("set model: usecase error: %v", err)
 		return nil, err
 	}
 	return &avatv1.SetPetModelReply{Success: true}, nil
@@ -57,6 +64,7 @@ func (s *AvatarService) SetPetModel(ctx context.Context, in *avatv1.SetPetModelR
 func (s *AvatarService) GetItems(ctx context.Context, in *avatv1.GetItemsRequest) (*avatv1.GetItemsReply, error) {
 	list, err := s.uc.GetItems(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("get items failed: %v", err)
 		return nil, err
 	}
 	out := make([]*avatv1.Item, 0, len(list))
@@ -70,10 +78,12 @@ func (s *AvatarService) GetItems(ctx context.Context, in *avatv1.GetItemsRequest
 func (s *AvatarService) UseItem(ctx context.Context, in *avatv1.UseItemRequest) (*avatv1.UseItemReply, error) {
 	userID, err := s.userIDFromCtx(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("use item: auth failed: %v", err)
 		return nil, err
 	}
 	_, err = s.uc.UseItem(ctx, userID, in.GetItemId())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("use item: usecase error: %v", err)
 		return nil, err
 	}
 	return &avatv1.UseItemReply{Success: true, Message: "ok"}, nil
@@ -83,10 +93,12 @@ func (s *AvatarService) UseItem(ctx context.Context, in *avatv1.UseItemRequest) 
 func (s *AvatarService) Chat(ctx context.Context, in *avatv1.ChatRequest) (*avatv1.ChatReply, error) {
 	userID, err := s.userIDFromCtx(ctx)
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("chat: auth failed: %v", err)
 		return nil, err
 	}
 	msg, err := s.uc.Chat(ctx, userID, in.GetContent())
 	if err != nil {
+		s.logger.WithContext(ctx).Errorf("chat: usecase error: %v", err)
 		return nil, err
 	}
 	return &avatv1.ChatReply{

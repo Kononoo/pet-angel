@@ -99,7 +99,7 @@ func ErrorEncoder(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(body)
+	_, _ = w.Write(body)
 }
 
 // NewHTTPServer new an HTTP server.
@@ -108,6 +108,20 @@ func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, auth *servic
 		khttp.Middleware(
 			recovery.Recovery(),
 		),
+		// CORS 过滤器：允许跨域与预检
+		khttp.Filter(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				if r.Method == http.MethodOptions {
+					w.WriteHeader(http.StatusNoContent)
+					return
+				}
+				next.ServeHTTP(w, r)
+			})
+		}),
 		khttp.ResponseEncoder(ResponseEncoder),
 		khttp.ErrorEncoder(ErrorEncoder),
 	}
