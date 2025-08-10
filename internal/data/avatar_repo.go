@@ -7,6 +7,7 @@ import (
 
 	aiclient "pet-angel/internal/ai"
 	"pet-angel/internal/biz"
+	"pet-angel/internal/util"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -197,11 +198,19 @@ func (r *AvatarRepo) CreateAIChat(ctx context.Context, userID int64, content str
 	}
 	reply, err := c.Chat(ctx, system, content)
 	if err != nil {
-		// 失败时也写一条兜底回复，保证对话连续
-		reply = "我听到了你的心情，我会一直陪着你~"
+		// AI调用失败时的兜底回复
+		reply = util.GetFallbackReply(content)
 	}
+	if reply == "" {
+		reply = util.GetFallbackReply(content)
+	}
+
+	// 使用独立的上下文进行数据库操作，避免超时
+	dbCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	row := &MessageDO{UserID: userID, Sender: 1, MessageType: 0, IsLocked: false, UnlockCoins: 0, Content: reply}
-	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
+	if err := r.data.Gorm.WithContext(dbCtx).Create(row).Error; err != nil {
 		return nil, err
 	}
 	return &biz.ChatMsg{

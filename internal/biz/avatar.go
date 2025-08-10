@@ -101,10 +101,40 @@ func (uc *AvatarUsecase) Chat(ctx context.Context, userID int64, content string)
 	if err != nil {
 		return nil, err
 	}
-	// 2) 生成 AI 回复（由 data 层调用 AI 客户端并落库），保持简单直连
-	//    返回值可选；业务层只需保证用户消息已记录
-	_, _ = uc.repo.CreateAIChat(ctx, userID, content)
+	// 2) 生成 AI 回复（由 data 层调用 AI 客户端并落库）
+	_, err = uc.repo.CreateAIChat(ctx, userID, content)
+	if err != nil {
+		// AI调用失败时，返回用户消息，不阻塞
+		return userMsg, nil
+	}
+	// 3) 返回用户消息，AI消息ID可以通过其他方式获取
 	return userMsg, nil
+}
+
+// GetChatWithAI 获取聊天消息和对应的AI回复
+func (uc *AvatarUsecase) GetChatWithAI(ctx context.Context, userID int64, content string) (*ChatMsg, *ChatMsg, error) {
+	// 1) 先写入用户消息
+	userMsg, err := uc.repo.CreateChat(ctx, userID, content)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 2) 生成 AI 回复
+	aiMsg, err := uc.repo.CreateAIChat(ctx, userID, content)
+	if err != nil {
+		// AI调用失败时，创建一个兜底AI消息
+		fallbackContent := "我在呢，会一直陪着你~ 有什么想和我分享的吗？"
+		aiMsg, _ = uc.repo.CreateAIMessage(ctx, userID, fallbackContent)
+		return userMsg, aiMsg, nil
+	}
+
+	// 确保AI消息不为空
+	if aiMsg == nil || aiMsg.Content == "" {
+		fallbackContent := "我在呢，会一直陪着你~ 有什么想和我分享的吗？"
+		aiMsg, _ = uc.repo.CreateAIMessage(ctx, userID, fallbackContent)
+	}
+
+	return userMsg, aiMsg, nil
 }
 
 // SaveAIMessage 将一段 AI 文本回复直接写库（供流式完成后调用）

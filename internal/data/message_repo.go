@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"errors"
+	"time"
 
 	"pet-angel/internal/biz"
 
@@ -175,8 +176,13 @@ func (r *MessageRepoImpl) CreateLockedNote(ctx context.Context, userID int64, un
 	if r.data.Gorm == nil {
 		return 0, nil
 	}
+
+	// 使用独立的上下文进行数据库操作，避免超时
+	dbCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	row := &MessageDO{UserID: userID, Sender: 1, MessageType: 1, IsLocked: true, UnlockCoins: unlockCoins, Content: content}
-	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
+	if err := r.data.Gorm.WithContext(dbCtx).Create(row).Error; err != nil {
 		return 0, err
 	}
 	return row.ID, nil

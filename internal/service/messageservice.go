@@ -144,7 +144,14 @@ func (s *MessageService) GenerateNotesHTTP() http.HandlerFunc {
 		// 生成 4 条文案（调用统一 AI）
 		client := ai.Default()
 		if client == nil {
-			client = ai.NewClient(ai.Config{})
+			// 如果默认客户端为空，创建一个新的
+			client = ai.NewClient(ai.Config{
+				Model:       "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+				BaseURL:     "https://api.siliconflow.cn/v1/",
+				APIKey:      "sk-wucfvbppymimfcrmzrtbowbnpquyudkjbjpzahlavmlhddmq",
+				MaxTokens:   16384,
+				Temperature: 0.5,
+			})
 		}
 		prompts := []string{
 			"请用20字以内写一条温柔的每日问候。",
@@ -167,7 +174,11 @@ func (s *MessageService) GenerateNotesHTTP() http.HandlerFunc {
 				Content string
 			}{Coins: coin, Content: txt})
 		}
-		if err := s.uc.CreateDailyNotes(r.Context(), userID, notes); err != nil {
+		// 使用独立的上下文进行数据库操作
+		dbCtx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		if err := s.uc.CreateDailyNotes(dbCtx, userID, notes); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

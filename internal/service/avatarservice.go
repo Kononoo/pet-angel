@@ -11,6 +11,7 @@ import (
 	"pet-angel/internal/ai"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
+	"pet-angel/internal/util"
 	jwtutil "pet-angel/internal/util/jwt"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -100,35 +101,32 @@ func (s *AvatarService) Chat(ctx context.Context, in *avatv1.ChatRequest) (*avat
 		s.logger.WithContext(ctx).Errorf("chat: auth failed: %v", err)
 		return nil, err
 	}
-	msg, err := s.uc.Chat(ctx, userID, in.GetContent())
+
+	// 使用新的方法同时获取用户消息和AI回复
+	userMsg, aiMsg, err := s.uc.GetChatWithAI(ctx, userID, in.GetContent())
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("chat: usecase error: %v", err)
 		return nil, err
 	}
 
-	// 获取AI回复
-	aiMsg, err := s.uc.GetLatestAIMessage(ctx, userID)
-	if err != nil {
-		s.logger.WithContext(ctx).Errorf("chat: get AI message error: %v", err)
-		// 即使获取AI消息失败，也返回用户消息
-		return &avatv1.ChatReply{
-			MessageId:   msg.ID,
-			Content:     msg.Content,
-			CreatedAt:   msg.CreatedAt.Format("2006-01-02 15:04:05"),
-			AiMessageId: 0,
-			AiContent:   "",
-			AiCreatedAt: "",
-		}, nil
+	// 构建回复
+	reply := &avatv1.ChatReply{
+		MessageId:   userMsg.ID,
+		Content:     userMsg.Content,
+		CreatedAt:   userMsg.CreatedAt.Format("2006-01-02 15:04:05"),
+		AiMessageId: 0,
+		AiContent:   "",
+		AiCreatedAt: "",
 	}
 
-	return &avatv1.ChatReply{
-		MessageId:   msg.ID,
-		Content:     msg.Content,
-		CreatedAt:   msg.CreatedAt.Format("2006-01-02 15:04:05"),
-		AiMessageId: aiMsg.ID,
-		AiContent:   aiMsg.Content,
-		AiCreatedAt: aiMsg.CreatedAt.Format("2006-01-02 15:04:05"),
-	}, nil
+	// 如果有AI回复，添加到回复中
+	if aiMsg != nil {
+		reply.AiMessageId = aiMsg.ID
+		reply.AiContent = aiMsg.Content
+		reply.AiCreatedAt = aiMsg.CreatedAt.Format("2006-01-02 15:04:05")
+	}
+
+	return reply, nil
 }
 
 // ChatStream 流式聊天（GRPC版本，暂不支持流式）
@@ -212,19 +210,21 @@ func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 		// 处理错误
 		if streamErr != nil {
 			fmt.Printf("AI Stream Error: %v\n", streamErr)
-			// 发送错误信息
-			_, _ = w.Write([]byte("data: [ERROR] AI服务暂时不可用，请稍后再试\n\n"))
+			// 发送兜底回复
+			fallbackReply := util.GetFallbackReply(body.Content)
+			_, _ = w.Write([]byte("data: " + fallbackReply + "\n\n"))
 			if flusher != nil {
 				flusher.Flush()
 			}
+			full = fallbackReply
 		} else if !hasContent {
-			// 如果没有收到任何内容，发送默认回复
-			defaultReply := "我在呢，会一直陪着你～"
-			_, _ = w.Write([]byte("data: " + defaultReply + "\n\n"))
+			// 如果没有收到任何内容，发送兜底回复
+			fallbackReply := util.GetFallbackReply(body.Content)
+			_, _ = w.Write([]byte("data: " + fallbackReply + "\n\n"))
 			if flusher != nil {
 				flusher.Flush()
 			}
-			full = defaultReply
+			full = fallbackReply
 		}
 
 		// 保存AI回复到数据库

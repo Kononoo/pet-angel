@@ -73,7 +73,21 @@ func (s *CommunityService) GetPostList(ctx context.Context, req *pb.GetPostListR
 			viewerID = id
 		}
 	}
-	total, list, err := s.uc.GetPostList(ctx, viewerID, req.GetCategoryId(), req.GetPostType(), strings.ToLower(req.GetSort()), req.GetPage(), req.GetPageSize())
+
+	// 设置默认分页参数
+	page := req.GetPage()
+	if page <= 0 {
+		page = 1
+	}
+	pageSize := req.GetPageSize()
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	total, list, err := s.uc.GetPostList(ctx, viewerID, req.GetCategoryId(), req.GetPostType(), strings.ToLower(req.GetSort()), page, pageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get posts failed: %v", err)
 		return nil, err
@@ -199,7 +213,21 @@ func (s *CommunityService) GetCommentList(ctx context.Context, req *pb.GetCommen
 			viewerID = id
 		}
 	}
-	total, list, err := s.uc.GetCommentList(ctx, viewerID, req.GetPostId(), req.GetPage(), req.GetPageSize())
+
+	// 设置默认分页参数
+	page := req.GetPage()
+	if page <= 0 {
+		page = 1
+	}
+	pageSize := req.GetPageSize()
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	total, list, err := s.uc.GetCommentList(ctx, viewerID, req.GetPostId(), page, pageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get comment list failed: %v", err)
 		return nil, err
