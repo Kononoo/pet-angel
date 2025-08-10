@@ -227,3 +227,27 @@ func (r *AvatarRepo) CreateAIMessage(ctx context.Context, userID int64, content 
 	}
 	return &biz.ChatMsg{ID: row.ID, UserID: row.UserID, Sender: row.Sender, MessageType: row.MessageType, IsLocked: row.IsLocked, UnlockCoins: row.UnlockCoins, Content: row.Content, CreatedAt: row.CreatedAt}, nil
 }
+
+// GetLatestAIMessage 获取最新的AI消息
+func (r *AvatarRepo) GetLatestAIMessage(ctx context.Context, userID int64) (*biz.ChatMsg, error) {
+	if r.data.Gorm == nil {
+		return nil, nil
+	}
+	var row MessageDO
+	if err := r.data.Gorm.WithContext(ctx).
+		Where("user_id=? AND sender=1 AND message_type=0", userID).
+		Order("created_at DESC").
+		First(&row).Error; err != nil {
+		return nil, err
+	}
+	return &biz.ChatMsg{
+		ID:          row.ID,
+		UserID:      row.UserID,
+		Sender:      row.Sender,
+		MessageType: row.MessageType,
+		IsLocked:    row.IsLocked,
+		UnlockCoins: row.UnlockCoins,
+		Content:     row.Content,
+		CreatedAt:   row.CreatedAt,
+	}, nil
+}

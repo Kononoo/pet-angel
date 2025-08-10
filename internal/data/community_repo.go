@@ -299,10 +299,21 @@ func (r *CommunityRepoImpl) CreatePost(ctx context.Context, userID int64, p *biz
 	if p.IsPrivate {
 		row.IsPrivate = 1
 	}
-	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
+	// 使用原生SQL插入，让数据库自动设置created_at
+	query := `INSERT INTO posts (user_id, category_id, title, content, type, image_urls, video_url, cover_url, locate, tags, liked_count, comment_count, is_private) 
+			  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)`
+	result := r.data.Gorm.WithContext(ctx).Exec(query,
+		row.UserID, row.CategoryID, row.Title, row.Content, row.Type,
+		row.ImageUrls, row.VideoUrl, row.CoverUrl, row.Locate, row.Tags, row.IsPrivate)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	// 获取插入的ID
+	var id int64
+	if err := r.data.Gorm.WithContext(ctx).Raw("SELECT LAST_INSERT_ID()").Scan(&id).Error; err != nil {
 		return 0, err
 	}
-	return row.ID, nil
+	return id, nil
 }
 
 func (r *CommunityRepoImpl) LikePost(ctx context.Context, userID, postID int64) error {
@@ -421,13 +432,20 @@ func (r *CommunityRepoImpl) CreateComment(ctx context.Context, userID, postID in
 	if r.data.Gorm == nil {
 		return 0, nil
 	}
-	row := &CommentModel{PostID: postID, UserID: userID, Content: content}
-	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
+	// 使用原生SQL插入，让数据库自动设置created_at
+	query := `INSERT INTO comments (post_id, user_id, content, liked_count) VALUES (?, ?, ?, 0)`
+	result := r.data.Gorm.WithContext(ctx).Exec(query, postID, userID, content)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	// 获取插入的ID
+	var id int64
+	if err := r.data.Gorm.WithContext(ctx).Raw("SELECT LAST_INSERT_ID()").Scan(&id).Error; err != nil {
 		return 0, err
 	}
 	_ = r.data.Gorm.WithContext(ctx).
 		Exec("UPDATE posts SET comment_count=comment_count+1 WHERE id=?", postID).Error
-	return row.ID, nil
+	return id, nil
 }
 
 func (r *CommunityRepoImpl) LikeComment(ctx context.Context, userID, commentID int64) error {

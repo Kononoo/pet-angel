@@ -52,6 +52,8 @@ type AvatarRepo interface {
 	CreateAIChat(ctx context.Context, userID int64, content string) (*ChatMsg, error)
 	// 直接写入一条 AI 消息（用于流式完成后落库）
 	CreateAIMessage(ctx context.Context, userID int64, content string) (*ChatMsg, error)
+	// 获取最新的AI消息
+	GetLatestAIMessage(ctx context.Context, userID int64) (*ChatMsg, error)
 }
 
 // AvatarUsecase 业务用例
@@ -113,4 +115,9 @@ func (uc *AvatarUsecase) SaveAIMessage(ctx context.Context, userID int64, conten
 // SaveUserMessage 仅保存用户消息（不触发 AI 回复）
 func (uc *AvatarUsecase) SaveUserMessage(ctx context.Context, userID int64, content string) (*ChatMsg, error) {
 	return uc.repo.CreateChat(ctx, userID, content)
+}
+
+// GetLatestAIMessage 获取最新的AI消息
+func (uc *AvatarUsecase) GetLatestAIMessage(ctx context.Context, userID int64) (*ChatMsg, error) {
+	return uc.repo.GetLatestAIMessage(ctx, userID)
 }

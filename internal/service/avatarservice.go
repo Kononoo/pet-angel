@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -104,10 +105,29 @@ func (s *AvatarService) Chat(ctx context.Context, in *avatv1.ChatRequest) (*avat
 		s.logger.WithContext(ctx).Errorf("chat: usecase error: %v", err)
 		return nil, err
 	}
+
+	// 获取AI回复
+	aiMsg, err := s.uc.GetLatestAIMessage(ctx, userID)
+	if err != nil {
+		s.logger.WithContext(ctx).Errorf("chat: get AI message error: %v", err)
+		// 即使获取AI消息失败，也返回用户消息
+		return &avatv1.ChatReply{
+			MessageId:   msg.ID,
+			Content:     msg.Content,
+			CreatedAt:   msg.CreatedAt.Format("2006-01-02 15:04:05"),
+			AiMessageId: 0,
+			AiContent:   "",
+			AiCreatedAt: "",
+		}, nil
+	}
+
 	return &avatv1.ChatReply{
-		MessageId: msg.ID,
-		Content:   msg.Content,
-		CreatedAt: msg.CreatedAt.Format("2006-01-02 15:04:05"),
+		MessageId:   msg.ID,
+		Content:     msg.Content,
+		CreatedAt:   msg.CreatedAt.Format("2006-01-02 15:04:05"),
+		AiMessageId: aiMsg.ID,
+		AiContent:   aiMsg.Content,
+		AiCreatedAt: aiMsg.CreatedAt.Format("2006-01-02 15:04:05"),
 	}, nil
 }
 
@@ -142,32 +162,79 @@ func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
 		// 先保存用户消息
 		if _, err := s.uc.SaveUserMessage(r.Context(), userID, body.Content); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		// 设置SSE响应头
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+
 		flusher, _ := w.(http.Flusher)
+
+		// 获取AI客户端
 		client := ai.Default()
 		if client == nil {
-			client = ai.NewClient(ai.Config{})
+			// 如果默认客户端为空，创建一个新的
+			client = ai.NewClient(ai.Config{
+				Model:       "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+				BaseURL:     "https://api.siliconflow.cn/v1/",
+				APIKey:      "sk-wucfvbppymimfcrmzrtbowbnpquyudkjbjpzahlavmlhddmq",
+				MaxTokens:   16384,
+				Temperature: 0.5,
+			})
 		}
-		system := "你是一个治愈系的宠物数字伙伴，以第一人称‘我’的口吻，温柔简短地回复。"
+
+		system := "你是一个治愈系的宠物数字伙伴，以第一人称'我'的口吻，温柔简短地回复。"
 		var full string
+		var hasContent bool
+
+		// 调用AI流式接口
 		_, streamErr := client.Stream(r.Context(), system, body.Content, func(delta string) error {
-			full += delta
-			_, _ = w.Write([]byte("data: " + delta + "\n\n"))
-			if flusher != nil {
-				flusher.Flush()
+			if delta != "" {
+				hasContent = true
+				full += delta
+				// 发送SSE数据
+				_, _ = w.Write([]byte("data: " + delta + "\n\n"))
+				if flusher != nil {
+					flusher.Flush()
+				}
 			}
 			return nil
 		})
-		if streamErr == nil && full != "" {
-			_, _ = s.uc.SaveAIMessage(r.Context(), userID, full)
+
+		// 处理错误
+		if streamErr != nil {
+			fmt.Printf("AI Stream Error: %v\n", streamErr)
+			// 发送错误信息
+			_, _ = w.Write([]byte("data: [ERROR] AI服务暂时不可用，请稍后再试\n\n"))
+			if flusher != nil {
+				flusher.Flush()
+			}
+		} else if !hasContent {
+			// 如果没有收到任何内容，发送默认回复
+			defaultReply := "我在呢，会一直陪着你～"
+			_, _ = w.Write([]byte("data: " + defaultReply + "\n\n"))
+			if flusher != nil {
+				flusher.Flush()
+			}
+			full = defaultReply
 		}
+
+		// 保存AI回复到数据库
+		if full != "" {
+			if _, err := s.uc.SaveAIMessage(r.Context(), userID, full); err != nil {
+				fmt.Printf("Save AI Message Error: %v\n", err)
+			}
+		}
+
+		// 发送结束信号
 		_, _ = w.Write([]byte("data: [DONE]\n\n"))
 		if flusher != nil {
 			flusher.Flush()
