@@ -184,13 +184,14 @@ func NewHTTPServer(c *conf.Server, storage *conf.Storage, greeter *service.Greet
 	authv1.RegisterAuthServiceHTTPServer(srv, auth)
 	userv1.RegisterUserServiceHTTPServer(srv, user)
 	communityv1.RegisterCommunityServiceHTTPServer(srv, community)
-	avatv1.RegisterAvatarServiceHTTPServer(srv, avatar)
 	msgv1.RegisterMessageServiceHTTPServer(srv, message)
 	// 供内部/运维触发：生成今日小纸条
 	srv.HandleFunc("/v1/message/generate-notes", message.GenerateNotesHTTP())
 	uploadv1.RegisterUploadServiceHTTPServer(srv, upload)
 
-	// SSE: 流式聊天（拆分至 service 层的原生 handler）
+	// SSE: 流式聊天（自定义原生 handler，必须在avatar服务注册之前）
 	srv.HandleFunc("/v1/avatar/chat/stream", avatar.ChatStreamHTTP())
+	// 注册avatar服务（流式聊天路由已被自定义处理器覆盖）
+	avatv1.RegisterAvatarServiceHTTPServer(srv, avatar)
 	return srv
 }

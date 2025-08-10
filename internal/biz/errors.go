@@ -49,4 +49,5 @@ var (
 	ErrInvalidParameter = errors.New("invalid parameter")
 	ErrDatabaseError    = errors.New("database error")
 	ErrUnauthorized     = errors.New("unauthorized")
+	ErrNotImplemented   = errors.New("method not implemented")
 )

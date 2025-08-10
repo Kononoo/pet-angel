@@ -111,6 +111,12 @@ func (s *AvatarService) Chat(ctx context.Context, in *avatv1.ChatRequest) (*avat
 	}, nil
 }
 
+// ChatStream 流式聊天（GRPC版本，暂不支持流式）
+func (s *AvatarService) ChatStream(ctx context.Context, in *avatv1.ChatRequest) (*avatv1.ChatReply, error) {
+	// GRPC版本暂不支持真正的流式，返回错误提示使用HTTP版本
+	return nil, biz.ErrNotImplemented
+}
+
 // ChatStreamHTTP 提供原生 HTTP SSE 处理器，便于在 server 中注册到指定路由
 func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
