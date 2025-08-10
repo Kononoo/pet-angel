@@ -103,7 +103,6 @@ clean:
 # all: 常用完整链路（生成 API/服务骨架/OpenAPI，wire 注入，并整理依赖）
 all:
 	make api
-	make service
 	make openapi
 	make wire
 	make generate

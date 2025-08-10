@@ -61,16 +61,16 @@ UNION ALL SELECT '萌宠摄影',30 FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM cate
 -- model_url 以当前所选 pet_models.path 为准，可后续由服务端刷新
 -- =========================
 INSERT INTO `users`(`nickname`,`username`,`password`,`avatar`,`model_id`,`model_url`,`pet_name`,`pet_avatar`,`pet_sex`,`kind`,`weight`,`hobby`,`description`,`coins`,`created_at`,`updated_at`)
-SELECT 'Lemon','lemon','123456','/avatars/u1.png',1,'/models/cat/angel_default.glb','柚子','/pets/p1.png',2,'猫',4,'晒太阳','爱笑的猫咪',300,'2025-03-01 10:00:00','2025-03-01 10:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='lemon')
-UNION ALL SELECT 'Ache','ache','123456','/avatars/u2.png',4,'/models/dog/angel_default.glb','阿奇','/pets/p2.png',1,'狗',9,'跑步','元气小狗',260,'2025-03-02 11:00:00','2025-03-02 11:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='ache')
-UNION ALL SELECT 'momo','momo','123456','/avatars/u3.png',2,'/models/cat/angel_pink.glb','桃桃','/pets/p3.png',2,'猫',5,'午睡','慵懒可爱',180,'2025-03-03 12:00:00','2025-03-03 12:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='momo')
-UNION ALL SELECT 'Dev','dev','123456','/avatars/u4.png',5,'/models/dog/golden.glb','可可','/pets/p4.png',1,'狗',18,'捡球','忠诚陪伴',120,'2025-03-04 13:00:00','2025-03-04 13:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='dev')
-UNION ALL SELECT 'Nana','nana','123456','/avatars/u5.png',3,'/models/cat/angel_blue.glb','奶糖','/pets/p5.png',2,'猫',3,'梳毛','软萌仔',90,'2025-03-05 14:00:00','2025-03-05 14:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='nana')
-UNION ALL SELECT 'Yuki','yuki','123456','/avatars/u6.png',6,'/models/dog/corgi.glb','雪球','/pets/p6.png',1,'狗',10,'摄影','短腿行侠',60,'2025-03-06 15:00:00','2025-03-06 15:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='yuki')
-UNION ALL SELECT 'Kiki','kiki','123456','/avatars/u7.png',1,'/models/cat/angel_default.glb','奇奇','/pets/p7.png',2,'猫',6,'晒太阳','爱吃罐头',40,'2025-03-07 16:20:00','2025-03-07 16:20:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='kiki')
-UNION ALL SELECT '七七','seven','123456','/avatars/u8.png',1,'/models/cat/angel_default.glb','七七','/pets/p8.png',2,'狸花猫',7,'爬窗台','温柔粘人',500,'2025-03-08 09:30:00','2025-03-08 09:30:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='seven')
-UNION ALL SELECT 'Lemon-粉丝','lemon_fan','123456','/avatars/u9.png',1,'/models/cat/angel_default.glb','小柚','/pets/p9.png',2,'猫',4,'收藏','忠实粉丝',80,'2025-03-09 09:10:00','2025-03-09 09:10:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='lemon_fan')
-UNION ALL SELECT '摄影师','photographer','123456','/avatars/u10.png',4,'/models/dog/angel_default.glb','阿布','/pets/p10.png',1,'狗',14,'摄影','镜头里的宠物',220,'2025-03-09 10:20:00','2025-03-09 10:20:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='photographer');
+SELECT 'Lemon','lemon','123456','/avatars/u1.png',1,'/models/cat/angel_default.glb','柚子','/pets/p1.png',2,'cat',4,'晒太阳','爱笑的猫咪',300,'2025-03-01 10:00:00','2025-03-01 10:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='lemon')
+UNION ALL SELECT 'Ache','ache','123456','/avatars/u2.png',4,'/models/dog/angel_default.glb','阿奇','/pets/p2.png',1,'dog',9,'跑步','元气小狗',260,'2025-03-02 11:00:00','2025-03-02 11:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='ache')
+UNION ALL SELECT 'momo','momo','123456','/avatars/u3.png',2,'/models/cat/angel_pink.glb','桃桃','/pets/p3.png',2,'cat',5,'午睡','慵懒可爱',180,'2025-03-03 12:00:00','2025-03-03 12:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='momo')
+UNION ALL SELECT 'Dev','dev','123456','/avatars/u4.png',5,'/models/dog/golden.glb','可可','/pets/p4.png',1,'dog',18,'捡球','忠诚陪伴',120,'2025-03-04 13:00:00','2025-03-04 13:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='dev')
+UNION ALL SELECT 'Nana','nana','123456','/avatars/u5.png',3,'/models/cat/angel_blue.glb','奶糖','/pets/p5.png',2,'cat',3,'梳毛','软萌仔',90,'2025-03-05 14:00:00','2025-03-05 14:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='nana')
+UNION ALL SELECT 'Yuki','yuki','123456','/avatars/u6.png',6,'/models/dog/corgi.glb','雪球','/pets/p6.png',1,'dog',10,'摄影','短腿行侠',60,'2025-03-06 15:00:00','2025-03-06 15:00:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='yuki')
+UNION ALL SELECT 'Kiki','kiki','123456','/avatars/u7.png',1,'/models/cat/angel_default.glb','奇奇','/pets/p7.png',2,'cat',6,'晒太阳','爱吃罐头',40,'2025-03-07 16:20:00','2025-03-07 16:20:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='kiki')
+UNION ALL SELECT '七七','seven','123456','/avatars/u8.png',1,'/models/cat/angel_default.glb','七七','/pets/p8.png',2,'cat',7,'爬窗台','温柔粘人',500,'2025-03-08 09:30:00','2025-03-08 09:30:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='seven')
+UNION ALL SELECT 'Lemon-粉丝','lemon_fan','123456','/avatars/u9.png',1,'/models/cat/angel_default.glb','小柚','/pets/p9.png',2,'cat',4,'收藏','忠实粉丝',80,'2025-03-09 09:10:00','2025-03-09 09:10:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='lemon_fan')
+UNION ALL SELECT '摄影师','photographer','123456','/avatars/u10.png',4,'/models/dog/angel_default.glb','阿布','/pets/p10.png',1,'dog',14,'摄影','镜头里的宠物',220,'2025-03-09 10:20:00','2025-03-09 10:20:00' FROM DUAL WHERE NOT EXISTS(SELECT 1 FROM users WHERE username='photographer');
 
 -- =========================
 -- 关注关系（去重幂等）
@@ -204,24 +204,4 @@ UNION ALL
 SELECT u.id, 1, 0, 0, 0, '你拍得真好看～', '2025-03-17 18:20:05' FROM users u WHERE u.username='photographer';
 
 SET FOREIGN_KEY_CHECKS = 1;
-
--- 解锁流水示例：momo 解锁其一条小纸条（消费20）
--- 先把 momo 的某条小纸条解锁状态置为 0，再记流水
--- 修复：避免 UPDATE...ORDER BY 报错，使用子查询选择最小ID
-UPDATE messages m
-    JOIN (
-        SELECT MIN(m2.id) AS mid
-        FROM messages m2 JOIN users u2 ON m2.user_id=u2.id AND u2.username='momo'
-        WHERE m2.message_type=1 AND m2.is_locked=1
-    ) t ON m.id=t.mid
-SET m.is_locked=0;
-INSERT INTO `user_unlock_records`(`user_id`,`message_id`,`coins_spent`,`created_at`)
-SELECT m.user_id, m.id, m.unlock_coins, '2025-03-17 08:00:00'
-FROM messages m
-         JOIN (
-    SELECT MIN(m3.id) AS mid
-    FROM messages m3 JOIN users u3 ON m3.user_id=u3.id AND u3.username='momo'
-    WHERE m3.message_type=1 AND m3.is_locked=0
-) t ON m.id=t.mid
-ON DUPLICATE KEY UPDATE `coins_spent`=VALUES(`coins_spent`);
 

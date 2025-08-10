@@ -775,6 +775,10 @@ components:
                 description:
                     type: string
                     description: 个人/宠物简介
+                coins:
+                    type: integer
+                    description: 金币余额（demo模式允许直接修改）
+                    format: int32
             description: 更新用户信息请求（仅包含需要更新的字段）
         api.avatar.v1.ChatReply:
             type: object

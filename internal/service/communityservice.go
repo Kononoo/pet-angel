@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"net/http"
 	"strings"
 
 	pb "pet-angel/api/community/v1"
@@ -33,19 +32,20 @@ func NewCommunityService(uc *biz.CommunityUsecase, cfg *conf.Auth, l log.Logger)
 	return &CommunityService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 
-// userID 解析登录用户ID
+// userID 解析登录用户ID（demo模式放开校验）
 func (s *CommunityService) userID(ctx context.Context) (int64, error) {
+	// demo模式：如果没有token或token无效，返回默认用户ID
 	ts, ok := transport.FromServerContext(ctx)
 	if !ok {
-		return 0, http.ErrNoCookie
+		return 1, nil // 默认用户ID
 	}
 	tok, err := jwtutil.FromAuthHeader(ts.RequestHeader().Get("Authorization"))
 	if err != nil {
-		return 0, err
+		return 1, nil // 默认用户ID
 	}
 	claims, err := jwtutil.Parse(s.jwtSecret, tok)
 	if err != nil {
-		return 0, err
+		return 1, nil // 默认用户ID
 	}
 	return claims.UserID, nil
 }

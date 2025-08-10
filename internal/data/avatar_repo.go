@@ -154,6 +154,9 @@ func (r *AvatarRepo) UseItem(ctx context.Context, userID, itemID int64) (int32, 
 
 // CreateChat 写入一条用户消息
 func (r *AvatarRepo) CreateChat(ctx context.Context, userID int64, content string) (*biz.ChatMsg, error) {
+	if r.data.Gorm == nil {
+		return nil, nil
+	}
 	row := &MessageDO{UserID: userID, Sender: 0, MessageType: 0, IsLocked: false, UnlockCoins: 0, Content: content}
 	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
 		return nil, err
@@ -172,6 +175,9 @@ func (r *AvatarRepo) CreateChat(ctx context.Context, userID int64, content strin
 
 // CreateAIChat 调用 AI 并将回复落库为一条来自 AI 的消息
 func (r *AvatarRepo) CreateAIChat(ctx context.Context, userID int64, content string) (*biz.ChatMsg, error) {
+	if r.data.Gorm == nil {
+		return nil, nil
+	}
 	// 读取用户/宠物关键信息作为 system prompt 的一部分（可选，不阻塞）
 	var profile struct{ Nickname, PetName, Kind string }
 	_ = r.data.Gorm.WithContext(ctx).Table("users").
@@ -212,6 +218,9 @@ func (r *AvatarRepo) CreateAIChat(ctx context.Context, userID int64, content str
 
 // CreateAIMessage 直接写入一条来自 AI 的消息
 func (r *AvatarRepo) CreateAIMessage(ctx context.Context, userID int64, content string) (*biz.ChatMsg, error) {
+	if r.data.Gorm == nil {
+		return nil, nil
+	}
 	row := &MessageDO{UserID: userID, Sender: 1, MessageType: 0, IsLocked: false, UnlockCoins: 0, Content: content}
 	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
 		return nil, err

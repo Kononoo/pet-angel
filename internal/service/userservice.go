@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"net/http"
 
 	pb "pet-angel/api/user/v1"
 	"pet-angel/internal/biz"
@@ -35,19 +34,20 @@ func NewUserService(uc *biz.UserUsecase, cfg *conf.Auth, l log.Logger) *UserServ
 	return &UserService{uc: uc, jwtSecret: secret, logger: log.NewHelper(l)}
 }
 
-// userID 从请求上下文解析当前登录用户 ID
+// userID 从请求上下文解析当前登录用户 ID（demo模式放开校验）
 func (s *UserService) userID(ctx context.Context) (int64, error) {
+	// demo模式：如果没有token或token无效，返回默认用户ID
 	ts, ok := transport.FromServerContext(ctx)
 	if !ok {
-		return 0, http.ErrNoCookie
+		return 1, nil // 默认用户ID
 	}
 	tok, err := jwtutil.FromAuthHeader(ts.RequestHeader().Get("Authorization"))
 	if err != nil {
-		return 0, err
+		return 1, nil // 默认用户ID
 	}
 	claims, err := jwtutil.Parse(s.jwtSecret, tok)
 	if err != nil {
-		return 0, err
+		return 1, nil // 默认用户ID
 	}
 	return claims.UserID, nil
 }

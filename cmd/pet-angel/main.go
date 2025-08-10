@@ -23,12 +23,14 @@ var (
 	Name     string
 	Version  string
 	flagconf string
+	testMode bool
 
 	id, _ = os.Hostname()
 )
 
 func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
+	flag.BoolVar(&testMode, "test", false, "test mode for data queries")
 }
 
 func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
@@ -75,6 +77,13 @@ func main() {
 	// 初始化 AI 客户端（从配置加载）。
 	aiclient.LoadFromConfig(c)
 
+	// 测试模式
+	if testMode {
+		testDataQueries()
+		return
+	}
+
+	// 正常模式
 	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Auth, bc.Minio, bc.Storage, logger)
 	if err != nil {
 		panic(err)

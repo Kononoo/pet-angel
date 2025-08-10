@@ -135,6 +135,7 @@ func (s *AuthService) UpdateUserInfo(ctx context.Context, in *authv1.UpdateUserI
 		Weight:      in.GetWeight(),
 		Hobby:       in.GetHobby(),
 		Description: in.GetDescription(),
+		Coins:       in.GetCoins(), // 允许直接修改金币（demo模式）
 	}
 	if err := s.uc.UpdateUserInfo(ctx, user); err != nil {
 		s.logger.WithContext(ctx).Errorf("update user info: usecase error: %v", err)

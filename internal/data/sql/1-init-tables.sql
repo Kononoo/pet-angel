@@ -173,25 +173,25 @@ CREATE TABLE `user_follows` (
   KEY `idx_followee` (`followee_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户关注关系表';
 
--- =========================
--- 默认数据
--- =========================
-INSERT INTO `pet_models` (`name`, `path`, `type`, `is_default`, `sort_order`) VALUES
-('默认猫咪', '/models/cat/default.png', 0, 1, 1),
-('可爱猫咪', '/models/cat/cute.png',    0, 0, 2),
-('默认狗狗', '/models/dog/default.png', 1, 1, 1),
-('忠诚狗狗', '/models/dog/loyal.png',   1, 0, 2)
-ON DUPLICATE KEY UPDATE `path`=VALUES(`path`);
-
-INSERT INTO `items` (`name`, `description`, `icon_path`, `coin_cost`) VALUES
-('猫粮',  '让猫咪吃饱饱', '/items/cat_food.png', 5),
-('狗粮',  '让狗狗吃饱饱', '/items/dog_food.png', 5),
-('逗猫棒', '和猫咪玩耍', '/items/cat_wand.png', 10),
-('飞盘',  '和狗狗玩耍', '/items/frisbee.png', 10),
-('梳子',  '给宠物梳毛', '/items/comb.png', 8),
-('项圈',  '给宠物戴上项圈', '/items/collar.png', 15)
-ON DUPLICATE KEY UPDATE `icon_path`=VALUES(`icon_path`);
-
-INSERT INTO `categories` (`name`, `sort_order`) VALUES
-('日常', 1),('知识', 2),('信息', 3),('种草', 4)
-ON DUPLICATE KEY UPDATE `sort_order`=VALUES(`sort_order`);
+-- -- =========================
+-- -- 默认数据
+-- -- =========================
+-- INSERT INTO `pet_models` (`name`, `path`, `type`, `is_default`, `sort_order`) VALUES
+-- ('默认猫咪', '/models/cat/default.png', 0, 1, 1),
+-- ('可爱猫咪', '/models/cat/cute.png',    0, 0, 2),
+-- ('默认狗狗', '/models/dog/default.png', 1, 1, 1),
+-- ('忠诚狗狗', '/models/dog/loyal.png',   1, 0, 2)
+-- ON DUPLICATE KEY UPDATE `path`=VALUES(`path`);
+--
+-- INSERT INTO `items` (`name`, `description`, `icon_path`, `coin_cost`) VALUES
+-- ('猫粮',  '让猫咪吃饱饱', '/items/cat_food.png', 5),
+-- ('狗粮',  '让狗狗吃饱饱', '/items/dog_food.png', 5),
+-- ('逗猫棒', '和猫咪玩耍', '/items/cat_wand.png', 10),
+-- ('飞盘',  '和狗狗玩耍', '/items/frisbee.png', 10),
+-- ('梳子',  '给宠物梳毛', '/items/comb.png', 8),
+-- ('项圈',  '给宠物戴上项圈', '/items/collar.png', 15)
+-- ON DUPLICATE KEY UPDATE `icon_path`=VALUES(`icon_path`);
+--
+-- INSERT INTO `categories` (`name`, `sort_order`) VALUES
+-- ('日常', 1),('知识', 2),('信息', 3),('种草', 4)
+-- ON DUPLICATE KEY UPDATE `sort_order`=VALUES(`sort_order`);

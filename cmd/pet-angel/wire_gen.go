@@ -7,15 +7,16 @@
 package main
 
 import (
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
 	"pet-angel/internal/data"
 	"pet-angel/internal/server"
 	"pet-angel/internal/service"
+)
 
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
-
+import (
 	_ "go.uber.org/automaxprocs"
 )
 

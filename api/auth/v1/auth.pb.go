@@ -446,7 +446,9 @@ type UpdateUserInfoRequest struct {
 	// 爱好（如：散步、逗猫棒）
 	Hobby string `protobuf:"bytes,9,opt,name=hobby,proto3" json:"hobby,omitempty"`
 	// 个人/宠物简介
-	Description   string `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`
+	// 金币余额（demo模式允许直接修改）
+	Coins         int32 `protobuf:"varint,11,opt,name=coins,proto3" json:"coins,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -551,6 +553,13 @@ func (x *UpdateUserInfoRequest) GetDescription() string {
 	return ""
 }
 
+func (x *UpdateUserInfoRequest) GetCoins() int32 {
+	if x != nil {
+		return x.Coins
+	}
+	return 0
+}
+
 // 更新用户信息响应
 type UpdateUserInfoReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -631,7 +640,7 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x05coins\x18\f \x01(\x05R\x05coins\x12\x1d\n" +
 	"\n" +
 	"created_at\x18\r \x01(\tR\tcreatedAt\x12\x1b\n" +
-	"\tmodel_url\x18\x0e \x01(\tR\bmodelUrl\"\x9d\x02\n" +
+	"\tmodel_url\x18\x0e \x01(\tR\bmodelUrl\"\xb3\x02\n" +
 	"\x15UpdateUserInfoRequest\x12\x1a\n" +
 	"\bnickname\x18\x01 \x01(\tR\bnickname\x12\x16\n" +
 	"\x06avatar\x18\x02 \x01(\tR\x06avatar\x12\x19\n" +
@@ -644,7 +653,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x06weight\x18\b \x01(\x05R\x06weight\x12\x14\n" +
 	"\x05hobby\x18\t \x01(\tR\x05hobby\x12 \n" +
 	"\vdescription\x18\n" +
-	" \x01(\tR\vdescription\"/\n" +
+	" \x01(\tR\vdescription\x12\x14\n" +
+	"\x05coins\x18\v \x01(\x05R\x05coins\"/\n" +
 	"\x13UpdateUserInfoReply\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess2\xa7\x03\n" +
 	"\vAuthService\x12V\n" +

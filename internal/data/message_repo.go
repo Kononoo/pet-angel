@@ -31,7 +31,7 @@ func NewMessageRepo(d *Data) *MessageRepoImpl { return &MessageRepoImpl{data: d}
 // ListMessages 倒序分页
 func (r *MessageRepoImpl) ListMessages(ctx context.Context, userID int64, onlyNotes bool, page, pageSize int32) (int32, []*biz.Message, error) {
 	if r.data.Gorm == nil {
-		return 0, nil, errors.New("gorm not initialized")
+		return 0, []*biz.Message{}, nil
 	}
 	q := r.data.Gorm.WithContext(ctx).
 		Model(&MessageDO{}).
@@ -71,6 +71,9 @@ func (r *MessageRepoImpl) ListMessages(ctx context.Context, userID int64, onlyNo
 
 // GetMessageByID 查询单条
 func (r *MessageRepoImpl) GetMessageByID(ctx context.Context, userID, messageID int64) (*biz.Message, error) {
+	if r.data.Gorm == nil {
+		return nil, biz.ErrMessageNotFound
+	}
 	var m MessageDO
 	tx := r.data.Gorm.WithContext(ctx).
 		Where("id=? AND user_id=?", messageID, userID).
@@ -95,6 +98,9 @@ func (r *MessageRepoImpl) GetMessageByID(ctx context.Context, userID, messageID 
 
 // UnlockMessage 事务扣金币并解锁
 func (r *MessageRepoImpl) UnlockMessage(ctx context.Context, userID, messageID int64) (int32, *biz.Message, error) {
+	if r.data.Gorm == nil {
+		return 0, nil, biz.ErrMessageNotFound
+	}
 	var remaining int32
 	var out *biz.Message
 	err := r.data.Gorm.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -166,6 +172,9 @@ func (r *MessageRepoImpl) UnlockMessage(ctx context.Context, userID, messageID i
 
 // CreateLockedNote 生成一条锁定的小纸条（AI 个性化内容）
 func (r *MessageRepoImpl) CreateLockedNote(ctx context.Context, userID int64, unlockCoins int32, content string) (int64, error) {
+	if r.data.Gorm == nil {
+		return 0, nil
+	}
 	row := &MessageDO{UserID: userID, Sender: 1, MessageType: 1, IsLocked: true, UnlockCoins: unlockCoins, Content: content}
 	if err := r.data.Gorm.WithContext(ctx).Create(row).Error; err != nil {
 		return 0, err

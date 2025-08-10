@@ -118,17 +118,16 @@ func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		// 鉴权
+		// 鉴权（demo模式放开校验）
+		userID := int64(1) // 默认用户ID
 		authHeader := r.Header.Get("Authorization")
-		tok, err := jwtutil.FromAuthHeader(authHeader)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
-		claims, err := jwtutil.Parse(s.jwtSecret, tok)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
+		if authHeader != "" {
+			tok, err := jwtutil.FromAuthHeader(authHeader)
+			if err == nil {
+				if claims, err := jwtutil.Parse(s.jwtSecret, tok); err == nil {
+					userID = claims.UserID
+				}
+			}
 		}
 		var body struct {
 			Content string `json:"content"`
@@ -138,7 +137,7 @@ func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 			return
 		}
 		// 先保存用户消息
-		if _, err := s.uc.SaveUserMessage(r.Context(), claims.UserID, body.Content); err != nil {
+		if _, err := s.uc.SaveUserMessage(r.Context(), userID, body.Content); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -152,7 +151,7 @@ func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 		}
 		system := "你是一个治愈系的宠物数字伙伴，以第一人称‘我’的口吻，温柔简短地回复。"
 		var full string
-		_, err = client.Stream(r.Context(), system, body.Content, func(delta string) error {
+		_, streamErr := client.Stream(r.Context(), system, body.Content, func(delta string) error {
 			full += delta
 			_, _ = w.Write([]byte("data: " + delta + "\n\n"))
 			if flusher != nil {
@@ -160,8 +159,8 @@ func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 			}
 			return nil
 		})
-		if err == nil && full != "" {
-			_, _ = s.uc.SaveAIMessage(r.Context(), claims.UserID, full)
+		if streamErr == nil && full != "" {
+			_, _ = s.uc.SaveAIMessage(r.Context(), userID, full)
 		}
 		_, _ = w.Write([]byte("data: [DONE]\n\n"))
 		if flusher != nil {
@@ -170,19 +169,20 @@ func (s *AvatarService) ChatStreamHTTP() http.HandlerFunc {
 	}
 }
 
-// userIDFromCtx 从请求头解析 JWT 获取 user_id
+// userIDFromCtx 从请求头解析 JWT 获取 user_id（demo模式放开校验）
 func (s *AvatarService) userIDFromCtx(ctx context.Context) (int64, error) {
+	// demo模式：如果没有token或token无效，返回默认用户ID
 	ts, ok := transport.FromServerContext(ctx)
 	if !ok {
-		return 0, context.Canceled
+		return 1, nil // 默认用户ID
 	}
 	tok, err := jwtutil.FromAuthHeader(ts.RequestHeader().Get("Authorization"))
 	if err != nil {
-		return 0, err
+		return 1, nil // 默认用户ID
 	}
 	claims, err := jwtutil.Parse(s.jwtSecret, tok)
 	if err != nil {
-		return 0, err
+		return 1, nil // 默认用户ID
 	}
 	return claims.UserID, nil
 }

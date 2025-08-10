@@ -134,6 +134,7 @@ func (r *AuthRepo) updateInfoSQL(ctx context.Context, user *biz.User) error {
 		     weight=IF(?<>0,?,weight),
 		     hobby=IF(?<>'',?,hobby),
 		     description=IF(?<>'',?,description),
+		     coins=IF(?<>0,?,coins),
 		     updated_at=NOW()
 		 WHERE id=?`,
 		user.Nickname, user.Nickname,
@@ -147,6 +148,7 @@ func (r *AuthRepo) updateInfoSQL(ctx context.Context, user *biz.User) error {
 		user.Weight, user.Weight,
 		user.Hobby, user.Hobby,
 		user.Description, user.Description,
+		user.Coins, user.Coins,
 		user.Id,
 	)
 	return err
@@ -279,6 +281,10 @@ func (r *AuthRepo) UpdateInfo(ctx context.Context, user *biz.User) error {
 	}
 	if user.Description != "" {
 		u.Description = user.Description
+	}
+	// 允许直接修改金币（demo模式）
+	if user.Coins != 0 {
+		u.Coins = user.Coins
 	}
 	return nil
 }

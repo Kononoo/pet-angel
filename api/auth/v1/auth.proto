@@ -129,6 +129,8 @@ message UpdateUserInfoRequest {
   string hobby = 9;
   // 个人/宠物简介
   string description = 10;
+  // 金币余额（demo模式允许直接修改）
+  int32 coins = 11;
 }
 
 // 更新用户信息响应
