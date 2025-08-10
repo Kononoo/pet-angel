@@ -126,3 +126,5 @@ help:
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
 .DEFAULT_GOAL := help
+
+# 编译执行: go build -o pet-angel ./cmd/pet-angel/
