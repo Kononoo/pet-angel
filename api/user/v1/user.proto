@@ -30,7 +30,7 @@ service UserService {
   // 点赞列表（用户点赞过的帖子）
   rpc GetLikeList(GetLikeListRequest) returns (GetLikeListReply) {
     option (google.api.http) = { get: "/v1/user/{user_id}/likes" };
-  }g
+  }
 }
 
 // 关注请求
