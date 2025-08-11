@@ -84,7 +84,19 @@ func (s *UserService) UnfollowUser(ctx context.Context, req *pb.UnfollowUserRequ
 // GetUserProfile 获取用户主页信息
 func (s *UserService) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.GetUserProfileReply, error) {
 	viewer, _ := s.userID(ctx)
-	u, posts, isFollowed, err := s.uc.GetProfile(ctx, viewer, req.GetUserId())
+
+	// 获取目标用户ID，如果为0则使用当前登录用户
+	targetUserID := req.GetUserId()
+	if targetUserID <= 0 {
+		var err error
+		targetUserID, err = s.userID(ctx)
+		if err != nil {
+			s.logger.WithContext(ctx).Errorf("get user profile: auth failed: %v", err)
+			return nil, err
+		}
+	}
+
+	u, posts, isFollowed, err := s.uc.GetProfile(ctx, viewer, targetUserID)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get profile failed: %v", err)
 		return nil, err

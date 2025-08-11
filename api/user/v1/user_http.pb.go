@@ -42,7 +42,7 @@ func RegisterUserServiceHTTPServer(s *http.Server, srv UserServiceHTTPServer) {
 	r := s.Route("/")
 	r.POST("/v1/user/follow", _UserService_FollowUser0_HTTP_Handler(srv))
 	r.POST("/v1/user/unfollow", _UserService_UnfollowUser0_HTTP_Handler(srv))
-	r.GET("/v1/user/{user_id}/profile", _UserService_GetUserProfile0_HTTP_Handler(srv))
+	r.GET("/v1/user/profile", _UserService_GetUserProfile0_HTTP_Handler(srv))
 	r.GET("/v1/user/follows", _UserService_GetFollowList0_HTTP_Handler(srv))
 	r.GET("/v1/user/likes", _UserService_GetLikeList0_HTTP_Handler(srv))
 }
@@ -95,9 +95,6 @@ func _UserService_GetUserProfile0_HTTP_Handler(srv UserServiceHTTPServer) func(c
 	return func(ctx http.Context) error {
 		var in GetUserProfileRequest
 		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
 			return err
 		}
 		http.SetOperation(ctx, OperationUserServiceGetUserProfile)
@@ -208,7 +205,7 @@ func (c *UserServiceHTTPClientImpl) GetLikeList(ctx context.Context, in *GetLike
 
 func (c *UserServiceHTTPClientImpl) GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...http.CallOption) (*GetUserProfileReply, error) {
 	var out GetUserProfileReply
-	pattern := "/v1/user/{user_id}/profile"
+	pattern := "/v1/user/profile"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationUserServiceGetUserProfile))
 	opts = append(opts, http.PathTemplate(pattern))
