@@ -85,18 +85,7 @@ func (s *UserService) UnfollowUser(ctx context.Context, req *pb.UnfollowUserRequ
 func (s *UserService) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.GetUserProfileReply, error) {
 	viewer, _ := s.userID(ctx)
 
-	// 获取目标用户ID，如果为0则使用当前登录用户
-	targetUserID := req.GetUserId()
-	if targetUserID <= 0 {
-		var err error
-		targetUserID, err = s.userID(ctx)
-		if err != nil {
-			s.logger.WithContext(ctx).Errorf("get user profile: auth failed: %v", err)
-			return nil, err
-		}
-	}
-
-	u, posts, isFollowed, err := s.uc.GetProfile(ctx, viewer, targetUserID)
+	u, posts, isFollowed, err := s.uc.GetProfile(ctx, viewer, req.GetUserId())
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get profile failed: %v", err)
 		return nil, err
@@ -127,21 +116,10 @@ func (s *UserService) GetUserProfile(ctx context.Context, req *pb.GetUserProfile
 
 // GetFollowList 获取关注列表
 func (s *UserService) GetFollowList(ctx context.Context, req *pb.GetFollowListRequest) (*pb.GetFollowListReply, error) {
-	// 获取目标用户ID，如果为0则使用当前登录用户
-	targetUserID := req.GetUserId()
-	if targetUserID <= 0 {
-		var err error
-		targetUserID, err = s.userID(ctx)
-		if err != nil {
-			s.logger.WithContext(ctx).Errorf("get follow list: auth failed: %v", err)
-			return nil, err
-		}
-	}
-
 	// 标准化分页参数
 	pagination := util.NormalizePagination(req.GetPage(), req.GetPageSize())
 
-	list, total, err := s.uc.GetFollowList(ctx, targetUserID, pagination.Page, pagination.PageSize)
+	list, total, err := s.uc.GetFollowList(ctx, req.GetUserId(), pagination.Page, pagination.PageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get follow list failed: %v", err)
 		return nil, err
@@ -155,21 +133,10 @@ func (s *UserService) GetFollowList(ctx context.Context, req *pb.GetFollowListRe
 
 // GetLikeList 获取点赞过的帖子列表
 func (s *UserService) GetLikeList(ctx context.Context, req *pb.GetLikeListRequest) (*pb.GetLikeListReply, error) {
-	// 获取目标用户ID，如果为0则使用当前登录用户
-	targetUserID := req.GetUserId()
-	if targetUserID <= 0 {
-		var err error
-		targetUserID, err = s.userID(ctx)
-		if err != nil {
-			s.logger.WithContext(ctx).Errorf("get like list: auth failed: %v", err)
-			return nil, err
-		}
-	}
-
 	// 标准化分页参数
 	pagination := util.NormalizePagination(req.GetPage(), req.GetPageSize())
 
-	list, total, err := s.uc.GetLikeList(ctx, targetUserID, pagination.Page, pagination.PageSize)
+	list, total, err := s.uc.GetLikeList(ctx, req.GetUserId(), pagination.Page, pagination.PageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get like list failed: %v", err)
 		return nil, err
