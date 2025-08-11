@@ -7,6 +7,7 @@ import (
 	pb "pet-angel/api/community/v1"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
+	"pet-angel/internal/util"
 	jwtutil "pet-angel/internal/util/jwt"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -74,20 +75,10 @@ func (s *CommunityService) GetPostList(ctx context.Context, req *pb.GetPostListR
 		}
 	}
 
-	// 设置默认分页参数
-	page := req.GetPage()
-	if page <= 0 {
-		page = 1
-	}
-	pageSize := req.GetPageSize()
-	if pageSize <= 0 {
-		pageSize = 20
-	}
-	if pageSize > 100 {
-		pageSize = 100
-	}
+	// 标准化分页参数
+	pagination := util.NormalizePagination(req.GetPage(), req.GetPageSize())
 
-	total, list, err := s.uc.GetPostList(ctx, viewerID, req.GetCategoryId(), req.GetPostType(), strings.ToLower(req.GetSort()), page, pageSize)
+	total, list, err := s.uc.GetPostList(ctx, viewerID, req.GetCategoryId(), req.GetPostType(), strings.ToLower(req.GetSort()), pagination.Page, pagination.PageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get posts failed: %v", err)
 		return nil, err
@@ -214,20 +205,10 @@ func (s *CommunityService) GetCommentList(ctx context.Context, req *pb.GetCommen
 		}
 	}
 
-	// 设置默认分页参数
-	page := req.GetPage()
-	if page <= 0 {
-		page = 1
-	}
-	pageSize := req.GetPageSize()
-	if pageSize <= 0 {
-		pageSize = 20
-	}
-	if pageSize > 100 {
-		pageSize = 100
-	}
+	// 标准化分页参数
+	pagination := util.NormalizePagination(req.GetPage(), req.GetPageSize())
 
-	total, list, err := s.uc.GetCommentList(ctx, viewerID, req.GetPostId(), page, pageSize)
+	total, list, err := s.uc.GetCommentList(ctx, viewerID, req.GetPostId(), pagination.Page, pagination.PageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get comment list failed: %v", err)
 		return nil, err

@@ -26,7 +26,7 @@ minio:
   bucket: "pet-angel"
 storage:
   # 服务器部署时的绝对路径
-  local_root: "/usr/local/app/pet-angel/data/assets"
+  local_root: "./data/assets"
   public_prefix: "/static/"
 ai:
   model: "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"

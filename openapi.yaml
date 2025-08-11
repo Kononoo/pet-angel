@@ -552,26 +552,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/api.user.v1.FollowUserReply'
-    /v1/user/unfollow:
-        post:
-            tags:
-                - UserService
-            description: 取消关注
-            operationId: UserService_UnfollowUser
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/api.user.v1.UnfollowUserRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/api.user.v1.UnfollowUserReply'
-    /v1/user/{userId}/follows:
+    /v1/user/follows:
         get:
             tags:
                 - UserService
@@ -579,8 +560,7 @@ paths:
             operationId: UserService_GetFollowList
             parameters:
                 - name: userId
-                  in: path
-                  required: true
+                  in: query
                   schema:
                     type: string
                 - name: page
@@ -600,7 +580,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/api.user.v1.GetFollowListReply'
-    /v1/user/{userId}/likes:
+    /v1/user/likes:
         get:
             tags:
                 - UserService
@@ -608,8 +588,7 @@ paths:
             operationId: UserService_GetLikeList
             parameters:
                 - name: userId
-                  in: path
-                  required: true
+                  in: query
                   schema:
                     type: string
                 - name: page
@@ -629,6 +608,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/api.user.v1.GetLikeListReply'
+    /v1/user/unfollow:
+        post:
+            tags:
+                - UserService
+            description: 取消关注
+            operationId: UserService_UnfollowUser
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.user.v1.UnfollowUserRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.user.v1.UnfollowUserReply'
     /v1/user/{userId}/profile:
         get:
             tags:

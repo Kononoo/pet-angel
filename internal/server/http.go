@@ -152,6 +152,17 @@ func NewHTTPServer(c *conf.Server, storage *conf.Storage, greeter *service.Greet
 				next.ServeHTTP(w, r)
 			})
 		}),
+		// 添加对multipart/form-data的支持
+		khttp.Filter(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+					// 对于multipart请求，直接传递给下一个处理器
+					next.ServeHTTP(w, r)
+					return
+				}
+				next.ServeHTTP(w, r)
+			})
+		}),
 		khttp.ResponseEncoder(ResponseEncoder),
 		khttp.ErrorEncoder(ErrorEncoder),
 	}
@@ -167,7 +178,7 @@ func NewHTTPServer(c *conf.Server, storage *conf.Storage, greeter *service.Greet
 
 	srv := khttp.NewServer(opts...)
 	// 静态资源服务（/static/ 前缀）
-	root := "./data/assets"
+	root := "./uploads"
 	prefix := "/static/"
 	if storage != nil {
 		if storage.LocalRoot != "" {
@@ -187,6 +198,9 @@ func NewHTTPServer(c *conf.Server, storage *conf.Storage, greeter *service.Greet
 	msgv1.RegisterMessageServiceHTTPServer(srv, message)
 	// 供内部/运维触发：生成今日小纸条
 	srv.HandleFunc("/v1/message/generate-notes", message.GenerateNotesHTTP())
+
+	// 文件上传：自定义处理器（必须在upload服务注册之前）
+	srv.HandleFunc("/v1/upload/file", upload.UploadFileHTTP())
 	uploadv1.RegisterUploadServiceHTTPServer(srv, upload)
 
 	// SSE: 流式聊天（自定义原生 handler，必须在avatar服务注册之前）

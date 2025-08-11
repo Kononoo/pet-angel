@@ -6,6 +6,7 @@ import (
 	pb "pet-angel/api/user/v1"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
+	"pet-angel/internal/util"
 	jwtutil "pet-angel/internal/util/jwt"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -114,7 +115,21 @@ func (s *UserService) GetUserProfile(ctx context.Context, req *pb.GetUserProfile
 
 // GetFollowList 获取关注列表
 func (s *UserService) GetFollowList(ctx context.Context, req *pb.GetFollowListRequest) (*pb.GetFollowListReply, error) {
-	list, total, err := s.uc.GetFollowList(ctx, req.GetUserId(), req.GetPage(), req.GetPageSize())
+	// 获取目标用户ID，如果为0则使用当前登录用户
+	targetUserID := req.GetUserId()
+	if targetUserID <= 0 {
+		var err error
+		targetUserID, err = s.userID(ctx)
+		if err != nil {
+			s.logger.WithContext(ctx).Errorf("get follow list: auth failed: %v", err)
+			return nil, err
+		}
+	}
+
+	// 标准化分页参数
+	pagination := util.NormalizePagination(req.GetPage(), req.GetPageSize())
+
+	list, total, err := s.uc.GetFollowList(ctx, targetUserID, pagination.Page, pagination.PageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get follow list failed: %v", err)
 		return nil, err
@@ -128,7 +143,21 @@ func (s *UserService) GetFollowList(ctx context.Context, req *pb.GetFollowListRe
 
 // GetLikeList 获取点赞过的帖子列表
 func (s *UserService) GetLikeList(ctx context.Context, req *pb.GetLikeListRequest) (*pb.GetLikeListReply, error) {
-	list, total, err := s.uc.GetLikeList(ctx, req.GetUserId(), req.GetPage(), req.GetPageSize())
+	// 获取目标用户ID，如果为0则使用当前登录用户
+	targetUserID := req.GetUserId()
+	if targetUserID <= 0 {
+		var err error
+		targetUserID, err = s.userID(ctx)
+		if err != nil {
+			s.logger.WithContext(ctx).Errorf("get like list: auth failed: %v", err)
+			return nil, err
+		}
+	}
+
+	// 标准化分页参数
+	pagination := util.NormalizePagination(req.GetPage(), req.GetPageSize())
+
+	list, total, err := s.uc.GetLikeList(ctx, targetUserID, pagination.Page, pagination.PageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get like list failed: %v", err)
 		return nil, err

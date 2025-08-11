@@ -10,6 +10,7 @@ import (
 	"pet-angel/internal/ai"
 	"pet-angel/internal/biz"
 	"pet-angel/internal/conf"
+	"pet-angel/internal/util"
 	jwtutil "pet-angel/internal/util/jwt"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -58,7 +59,11 @@ func (s *MessageService) GetMessageList(ctx context.Context, in *msgv1.GetMessag
 		s.logger.WithContext(ctx).Errorf("get messages: parse auth failed: %v", err)
 		return nil, err
 	}
-	total, list, err := s.uc.GetList(ctx, userID, in.GetOnlyNotes(), in.GetPage(), in.GetPageSize())
+
+	// 标准化分页参数
+	pagination := util.NormalizePagination(in.GetPage(), in.GetPageSize())
+
+	total, list, err := s.uc.GetList(ctx, userID, in.GetOnlyNotes(), pagination.Page, pagination.PageSize)
 	if err != nil {
 		s.logger.WithContext(ctx).Errorf("get messages: usecase error: %v", err)
 		return nil, err

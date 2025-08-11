@@ -532,7 +532,7 @@ func (x *UserBrief) GetAvatar() string {
 // 关注列表请求/响应
 type GetFollowListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 目标用户ID
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 目标用户ID（可选，不传则使用当前登录用户）
 	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                         // 页码，从1开始（默认1）
 	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页条数（默认20，最大100）
 	unknownFields protoimpl.UnknownFields
@@ -647,7 +647,7 @@ func (x *GetFollowListReply) GetList() []*UserBrief {
 // 点赞列表请求/响应
 type GetLikeListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 目标用户ID
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 目标用户ID（可选，不传则使用当前登录用户）
 	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                         // 页码，从1开始（默认1）
 	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页条数（默认20，最大100）
 	unknownFields protoimpl.UnknownFields
@@ -813,14 +813,14 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"T\n" +
 	"\x10GetLikeListReply\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x05R\x05total\x12*\n" +
-	"\x04list\x18\x02 \x03(\v2\x16.api.user.v1.PostBriefR\x04list2\xcb\x04\n" +
+	"\x04list\x18\x02 \x03(\v2\x16.api.user.v1.PostBriefR\x04list2\xb7\x04\n" +
 	"\vUserService\x12f\n" +
 	"\n" +
 	"FollowUser\x12\x1e.api.user.v1.FollowUserRequest\x1a\x1c.api.user.v1.FollowUserReply\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/user/follow\x12n\n" +
 	"\fUnfollowUser\x12 .api.user.v1.UnfollowUserRequest\x1a\x1e.api.user.v1.UnfollowUserReply\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/user/unfollow\x12z\n" +
-	"\x0eGetUserProfile\x12\".api.user.v1.GetUserProfileRequest\x1a .api.user.v1.GetUserProfileReply\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/user/{user_id}/profile\x12w\n" +
-	"\rGetFollowList\x12!.api.user.v1.GetFollowListRequest\x1a\x1f.api.user.v1.GetFollowListReply\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/user/{user_id}/follows\x12o\n" +
-	"\vGetLikeList\x12\x1f.api.user.v1.GetLikeListRequest\x1a\x1d.api.user.v1.GetLikeListReply\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/user/{user_id}/likesB\x1aZ\x18pet-angel/api/user/v1;v1b\x06proto3"
+	"\x0eGetUserProfile\x12\".api.user.v1.GetUserProfileRequest\x1a .api.user.v1.GetUserProfileReply\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/user/{user_id}/profile\x12m\n" +
+	"\rGetFollowList\x12!.api.user.v1.GetFollowListRequest\x1a\x1f.api.user.v1.GetFollowListReply\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/user/follows\x12e\n" +
+	"\vGetLikeList\x12\x1f.api.user.v1.GetLikeListRequest\x1a\x1d.api.user.v1.GetLikeListReply\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/v1/user/likesB\x1aZ\x18pet-angel/api/user/v1;v1b\x06proto3"
 
 var (
 	file_user_v1_user_proto_rawDescOnce sync.Once

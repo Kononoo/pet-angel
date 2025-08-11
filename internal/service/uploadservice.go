@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -182,4 +183,138 @@ func (s *UploadService) GetPresign(ctx context.Context, in *uploadv1.GetPresignR
 func (s *UploadService) UploadDone(ctx context.Context, in *uploadv1.UploadDoneRequest) (*uploadv1.UploadDoneReply, error) {
 	// 直传登记占位；直接回显
 	return &uploadv1.UploadDoneReply{Url: in.GetUrl()}, nil
+}
+
+// UploadFileHTTP 自定义HTTP处理器，用于处理multipart/form-data上传
+func (s *UploadService) UploadFileHTTP() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// 设置CORS头
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// 解析multipart表单
+		if err := r.ParseMultipartForm(32 << 20); err != nil { // 32MB
+			http.Error(w, "Failed to parse multipart form", http.StatusBadRequest)
+			return
+		}
+
+		// 获取文件
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, "No file uploaded", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// 获取类型
+		category := r.FormValue("type")
+		if category == "" {
+			category = "image"
+		}
+
+		// 归一化类型
+		if category == "avatar" {
+			category = "avatar"
+		} else if category == "video" {
+			category = "video"
+		} else {
+			category = "image"
+		}
+
+		// 设置存储路径
+		root := "./uploads"
+		prefix := "/static/"
+		if s.storage != nil {
+			if s.storage.LocalRoot != "" {
+				root = s.storage.LocalRoot
+			}
+			if s.storage.PublicPrefix != "" {
+				prefix = s.storage.PublicPrefix
+			}
+		}
+		_ = ensureDir(root)
+
+		// 检测内容类型
+		sniff := make([]byte, 512)
+		n, _ := file.Read(sniff)
+		_, _ = file.Seek(0, io.SeekStart)
+		contentType := http.DetectContentType(sniff[:n])
+
+		// 校验MIME与大小
+		switch category {
+		case "image", "avatar":
+			if !allowedImageMIMEs[contentType] {
+				http.Error(w, "Unsupported image type", http.StatusBadRequest)
+				return
+			}
+			if header.Size > 0 && header.Size > int64(maxImageMB)*1024*1024 {
+				http.Error(w, "Image too large", http.StatusBadRequest)
+				return
+			}
+		case "video":
+			if !allowedVideoMIMEs[contentType] {
+				http.Error(w, "Unsupported video type", http.StatusBadRequest)
+				return
+			}
+			if header.Size > 0 && header.Size > int64(maxVideoMB)*1024*1024 {
+				http.Error(w, "Video too large", http.StatusBadRequest)
+				return
+			}
+		}
+
+		// 生成文件路径
+		subdir := filepath.Join(category, time.Now().Format("2006/01/02"))
+		baseDir := filepath.Join(root, subdir)
+		if err := ensureDir(baseDir); err != nil {
+			http.Error(w, "Failed to create directory", http.StatusInternalServerError)
+			return
+		}
+
+		// 生成文件名
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			if e := mimeToExt(contentType); e != "" {
+				ext = e
+			} else {
+				ext = ".bin"
+			}
+		}
+		filename := fmt.Sprintf("%d_%d%s", time.Now().UnixNano(), os.Getpid(), ext)
+		dst := filepath.Join(baseDir, filename)
+
+		// 保存文件
+		if err := saveMultipartFile(file, dst); err != nil {
+			s.logger.Errorf("Failed to save file %s: %v", dst, err)
+			http.Error(w, "Failed to save file", http.StatusInternalServerError)
+			return
+		}
+		s.logger.Infof("File saved successfully: %s", dst)
+
+		// 生成URL
+		url := strings.TrimRight(prefix, "/") + "/" + filepath.ToSlash(filepath.Join(subdir, filename))
+
+		// 返回JSON响应
+		response := map[string]interface{}{
+			"stat": 1,
+			"code": 0,
+			"msg":  "ok",
+			"data": map[string]string{
+				"url": url,
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
 }

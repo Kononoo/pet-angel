@@ -43,8 +43,8 @@ func RegisterUserServiceHTTPServer(s *http.Server, srv UserServiceHTTPServer) {
 	r.POST("/v1/user/follow", _UserService_FollowUser0_HTTP_Handler(srv))
 	r.POST("/v1/user/unfollow", _UserService_UnfollowUser0_HTTP_Handler(srv))
 	r.GET("/v1/user/{user_id}/profile", _UserService_GetUserProfile0_HTTP_Handler(srv))
-	r.GET("/v1/user/{user_id}/follows", _UserService_GetFollowList0_HTTP_Handler(srv))
-	r.GET("/v1/user/{user_id}/likes", _UserService_GetLikeList0_HTTP_Handler(srv))
+	r.GET("/v1/user/follows", _UserService_GetFollowList0_HTTP_Handler(srv))
+	r.GET("/v1/user/likes", _UserService_GetLikeList0_HTTP_Handler(srv))
 }
 
 func _UserService_FollowUser0_HTTP_Handler(srv UserServiceHTTPServer) func(ctx http.Context) error {
@@ -119,9 +119,6 @@ func _UserService_GetFollowList0_HTTP_Handler(srv UserServiceHTTPServer) func(ct
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
 		http.SetOperation(ctx, OperationUserServiceGetFollowList)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
 			return srv.GetFollowList(ctx, req.(*GetFollowListRequest))
@@ -139,9 +136,6 @@ func _UserService_GetLikeList0_HTTP_Handler(srv UserServiceHTTPServer) func(ctx 
 	return func(ctx http.Context) error {
 		var in GetLikeListRequest
 		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
 			return err
 		}
 		http.SetOperation(ctx, OperationUserServiceGetLikeList)
@@ -188,7 +182,7 @@ func (c *UserServiceHTTPClientImpl) FollowUser(ctx context.Context, in *FollowUs
 
 func (c *UserServiceHTTPClientImpl) GetFollowList(ctx context.Context, in *GetFollowListRequest, opts ...http.CallOption) (*GetFollowListReply, error) {
 	var out GetFollowListReply
-	pattern := "/v1/user/{user_id}/follows"
+	pattern := "/v1/user/follows"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationUserServiceGetFollowList))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -201,7 +195,7 @@ func (c *UserServiceHTTPClientImpl) GetFollowList(ctx context.Context, in *GetFo
 
 func (c *UserServiceHTTPClientImpl) GetLikeList(ctx context.Context, in *GetLikeListRequest, opts ...http.CallOption) (*GetLikeListReply, error) {
 	var out GetLikeListReply
-	pattern := "/v1/user/{user_id}/likes"
+	pattern := "/v1/user/likes"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationUserServiceGetLikeList))
 	opts = append(opts, http.PathTemplate(pattern))
